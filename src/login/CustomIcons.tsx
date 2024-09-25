@@ -1,11 +1,10 @@
-import * as React from 'react';
 import SvgIcon from '@mui/material/SvgIcon';
 
 export function UmEntreposto() {
   return (
     <SvgIcon sx={{ height: 52, width: 220 }}>
-      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="100%" viewBox="0 0 688 118" enable-background="new 0 0 668 118" xml:space="preserve">
+      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="100%" viewBox="0 0 688 118" enableBackground="new 0 0 668 118" xmlSpace="preserve">
 
 <path fill="#98b344"  
 	d="
