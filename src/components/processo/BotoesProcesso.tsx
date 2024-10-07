@@ -2,7 +2,7 @@ import { Box, Typography, Divider, Stack } from '@mui/material';
 
 export default function BotoesProcesso() {
     return (
-        <Box className="flex flex-col mx-auto mt-24 mb-20 items-center">
+        <Box className="flex flex-col mx-auto mt-24 mb-24 items-center px-12">
             <Stack 
                 direction={{ xs: "column", md: "row" }}
                 spacing={4} 
@@ -27,7 +27,7 @@ export default function BotoesProcesso() {
                         <Divider 
                             orientation="horizontal" 
                             flexItem 
-                            sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }}
+                            sx={{ display: { xs: 'none', md: 'block' }, mx: 1 }}
                         />
 
                         {/* 2º Avaliação */}
@@ -44,7 +44,7 @@ export default function BotoesProcesso() {
                         <Divider 
                             orientation="horizontal" 
                             flexItem 
-                            sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }}
+                            sx={{ display: { xs: 'none', md: 'block' }, mx: 1 }}
                         />
 
                         {/* 3º Envio */}
@@ -94,7 +94,7 @@ export default function BotoesProcesso() {
                         <Divider 
                             orientation="horizontal" 
                             flexItem 
-                            sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }}
+                            sx={{ display: { xs: 'none', md: 'block' }, mx: 1 }}
                         />
 
                         {/* 2º Aprovação */}
@@ -111,7 +111,7 @@ export default function BotoesProcesso() {
                         <Divider 
                             orientation="horizontal" 
                             flexItem 
-                            sx={{ display: { xs: 'none', md: 'block' }, mx: 2 }}
+                            sx={{ display: { xs: 'none', md: 'block' }, mx: 1 }}
                         />
 
                         {/* 3º Entrega */}

@@ -14,11 +14,11 @@ export default function Footer() {
         flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 3,
+        padding: 4,
       }}
     >
       {/* Informações da empresa */}
-      <Box className="ml-24" sx={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'start', mb: isMobile ? 2 : 0 }}>
+      <Box className="md:ml-24" sx={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'start', mb: isMobile ? 2 : 0 }}>
         <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'gray' }}>
           <span style={{ color: '#98b344' }}>um</span>entreposto
         </Typography>
@@ -75,7 +75,7 @@ export default function Footer() {
       </Box>
 
         {/* Imagem do logo com margin top */}
-      <Box className="mr-24" sx={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-end', marginTop: 2 }}>
+      <Box className="md:mr-24" sx={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-end', marginTop: 2 }}>
         <img
           src="/images/InovaMack-2023-Logo-branco.png"
           alt="InovaMack"

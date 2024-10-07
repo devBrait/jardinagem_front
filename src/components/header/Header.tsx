@@ -2,9 +2,8 @@ import { Box, Divider, Typography } from '@mui/material';
 
 export default function Header() {
     return (
-        <Box
-            className="flex flex-col md:flex-row items-center justify-between p-4 md:mt-12"
-            sx={{ textAlign: { xs: 'center', md: 'left' } }} // Ajuste de alinhamento para diferentes telas
+        <Box className="flex flex-col md:flex-row items-center justify-between p-4 md:mt-12" 
+             sx={{ textAlign: { xs: 'center', md: 'left' } }}
         >
             {/* Box para Fornecedores */}
             <Box className="mb-8 md:mb-0 md:ml-32">
@@ -16,17 +15,19 @@ export default function Header() {
                 </Typography>
             </Box>
 
-            {/* Divider vertical para telas grandes e horizontal para telas pequenas */}
-            <Divider
-                orientation="vertical"
-                flexItem
-                sx={{
-                    display: { xs: 'none', md: 'block' },
-                    height: '60px',
-                    color: "#656565",
-                    marginX: 5,
-                }}
-            />
+            {/* Divider vertical */}
+            <Box className="flex items-center justify-center" sx={{ height: '100%' }}>
+                <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{
+                        display: { xs: 'none', md: 'block' },
+                        height: '80px',
+                        color: "#656565",
+                        marginX: 5,
+                    }}
+                />
+            </Box>
 
             {/* Box para Paisagistas */}
             <Box className="mb-4 md:mb-0 md:mr-32">
