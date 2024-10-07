@@ -61,11 +61,11 @@ export default function BotoesProcesso() {
                 </Box>
 
                 {/* Divisor Vertical */}
-                <Divider orientation="vertical" flexItem  
+                <Divider orientation="vertical" flexItem   
                 sx={{
                     display: { xs: 'none', md: 'block' },
                     color: "#656565",
-                    marginX: 12,
+                    marginX: 5,
                 }}/>
 
                 <Divider orientation="horizontal" flexItem  
