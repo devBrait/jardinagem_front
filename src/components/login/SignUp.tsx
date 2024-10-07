@@ -1,7 +1,6 @@
 import * as React from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Checkbox from '@mui/material/Checkbox'
 import CssBaseline from '@mui/material/CssBaseline'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
@@ -15,10 +14,13 @@ import MuiCard from '@mui/material/Card'
 import HomeIcon from '@mui/icons-material/Home'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
-import ForgotPassword from './ForgotPassword'
 import { GoogleIcon, UmEntreposto } from './CustomIcons'
 import AppTheme from './theme/AppTheme'
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import toastr from './../../toastrConfig'
+
+
 
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -64,18 +66,15 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('')
   const [passwordError, setPasswordError] = React.useState(false)
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('')
-  const [open, setOpen] = React.useState(false)
+  const [userType, setUserType] = React.useState('paisagista') // Estado para paisagista ou fornecedor
 
-  const handleClickOpen = () => {
-    setOpen(true)
+  const handleUserTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUserType((event.target as HTMLInputElement).value)
   }
+  
 
   const handleNaoTemConta = () => {
     window.location.href = '/cadastro'
-  }
-
-  const handleClose = () => {
-    setOpen(false)
   }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -150,6 +149,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   
     return isValid
   }
+
   
 
   return (
@@ -184,6 +184,22 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
             }}
           >
             <FormControl>
+              <FormLabel>Você é um:</FormLabel>
+              <RadioGroup row value={userType} onChange={handleUserTypeChange}>
+                <FormControlLabel
+                  value="paisagista"
+                  control={<Radio />}
+                  label="Paisagista"
+                />
+                <FormControlLabel
+                  value="fornecedor"
+                  control={<Radio />}
+                  label="Fornecedor"
+                />
+              </RadioGroup>
+            </FormControl>
+            
+            <FormControl>
               <FormLabel htmlFor="email">E-mail</FormLabel>
               <TextField
                 error={emailError}
@@ -204,15 +220,6 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
             <FormControl>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <FormLabel htmlFor="password">Senha</FormLabel>
-                <Link
-                  underline='none'
-                  component="button"
-                  onClick={handleClickOpen}
-                  variant="body2"
-                  sx={{ alignSelf: 'baseline'}}
-                >
-                  Esqueceu sua senha?
-                </Link>
               </Box>
               <TextField
                 error={passwordError}
@@ -229,30 +236,110 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Lembrar conta"
-            />
-            <ForgotPassword open={open} handleClose={handleClose} />
+             {/* Campos adicionais para Paisagista */}
+        {userType === 'paisagista' && (
+          <>
+            <FormControl>
+              <FormLabel>CNPJ</FormLabel>
+              <TextField
+                id="cnpj-paisagista"
+                placeholder="Digite o CNPJ"
+                fullWidth
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Nome</FormLabel>
+              <TextField
+                id="nome-paisagista"
+                placeholder="Digite seu nome"
+                fullWidth
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Celular</FormLabel>
+              <TextField
+                id="celular-paisagista"
+                placeholder="Digite seu número de celular"
+                fullWidth
+              />
+            </FormControl>
+          </>
+        )}
+
+        {/* Campos adicionais para Fornecedor */}
+{userType === 'fornecedor' && (
+  <>
+    <FormControl>
+      <FormLabel>CNPJ</FormLabel>
+      <TextField
+        id="cnpj-fornecedor"
+        placeholder="Digite o CNPJ"
+        fullWidth
+      />
+    </FormControl>
+    <FormControl>
+      <FormLabel>Nome</FormLabel>
+      <TextField
+        id="nome-fornecedor"
+        placeholder="Digite seu nome"
+        fullWidth
+      />
+    </FormControl>
+    <FormControl>
+      <FormLabel>Celular</FormLabel>
+      <TextField
+        id="celular-fornecedor"
+        placeholder="Digite seu número de celular"
+        fullWidth
+      />
+    </FormControl>
+    <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+      <FormControl sx={{ flexGrow: 1 }}>
+        <FormLabel>Estado</FormLabel>
+        <TextField
+          id="estado-fornecedor"
+          placeholder="Digite o estado"
+          fullWidth
+        />
+      </FormControl>
+      <FormControl sx={{ flexGrow: 1 }}>
+        <FormLabel>Cidade</FormLabel>
+        <TextField
+          id="cidade-fornecedor"
+          placeholder="Digite a cidade"
+          fullWidth
+        />
+      </FormControl>
+    </Stack>
+    <FormControl>
+      <FormLabel>Endereço</FormLabel>
+      <TextField
+        id="endereco-fornecedor"
+        placeholder="Digite o endereço"
+        fullWidth
+      />
+    </FormControl>
+  </>
+)}
             <Button
               type="submit"
               fullWidth
               variant="contained"
               onClick={validateInputs}
             >
-              Acessar
+              Cadastrar-se
             </Button>
             <Typography sx={{ textAlign: 'center' }}>
-              Não tem uma conta?{' '}
+              Já tem uma conta?{' '}
               <span>
                 <Link
                   underline='none'
-                  href="/cadastro"
+                  href="/login"
                   variant="body2"
                   sx={{ alignSelf: 'center' }}
                   onClick={handleNaoTemConta}
                 >
-                  Registre-se
+                  Acesse
                 </Link>
               </span>
             </Typography>
@@ -266,7 +353,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
               onClick={() => alert('Log in com Google')}
               startIcon={<GoogleIcon />}
             >
-              Log-in com Google
+              Cadastro com Google
             </Button>
           </Box>
         </Card>
