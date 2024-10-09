@@ -1,4 +1,3 @@
-import * as React from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -18,10 +17,11 @@ import { GoogleIcon, UmEntreposto } from './CustomIcons'
 import AppTheme from './theme/AppTheme'
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import toastr from './../../toastrConfig'
-
-
-
+import { ChangeEvent, FormEvent, useState } from 'react'
+import toastr from '../../toastrConfig'
+import { InputAdornment } from '@mui/material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -42,9 +42,9 @@ const Card = styled(MuiCard)(({ theme }) => ({
   }),
 }))
 
-const SignInContainer = styled(Stack)(({ theme }) => ({
+const SignUpContainer = styled(Stack)(({ theme }) => ({
   padding: 20,
-  marginTop: '10vh',
+  marginTop: '0.5vh',
   '&::before': {
     content: '""',
     display: 'block',
@@ -61,40 +61,79 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }))
 
-export default function  SignIn(props: { disableCustomTheme?: boolean }) {
-  const [emailError, setEmailError] = React.useState(false)
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('')
-  const [passwordError, setPasswordError] = React.useState(false)
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('')
-  const [userType, setUserType] = React.useState('paisagista') // Estado para paisagista ou fornecedor
+export default function  SignUp(props: { disableCustomTheme?: boolean }) {
+  const [emailError, setEmailError] = useState(false)
+  const [emailErrorMessage, setEmailErrorMessage] = useState('')
+  const [cpfError, setcpfError] = useState(false)
+  const [cpfErrorMessage, setcpfErrorMessage] = useState('')
+  const [cnpjError, setcnpjError] = useState(false)
+  const [cnpjErrorMessage, setcnpjErrorMessage] = useState('')
+  const [nomeError, setnomeError] = useState(false)
+  const [nomeErrorMessage, setnomeErrorMessage] = useState('')
+  const [cepError, setcepError] = useState(false)
+  const [cepErrorMessage, setcepErrorMessage] = useState('')
+  const [empresaError, setempresaError] = useState(false)
+  const [empresaErrorMessage, setempresaErrorMessage] = useState('')
+  const [celularError, setcelularError] = useState(false)
+  const [celularErrorMessage, setcelularErrorMessage] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState('')
+  const [userType, setUserType] = useState('paisagista') 
+  const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate()
 
-  const handleUserTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  interface Paisagista {
+    email: string;
+    senha: string;
+    nome: string;
+    telefone: number;
+    CPF: number;
+  }
+
+  interface Fornecedor {
+    email: string;
+    senha: string;
+    nome: string;
+    telefone: number;
+    CNPJ: number;
+    CEP: string;
+    empresa: string;
+  }
+
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev)
+  }
+
+
+  const handleUserTypeChange = (event: ChangeEvent<HTMLInputElement>) => {
     setUserType((event.target as HTMLInputElement).value)
   }
   
 
   const handleNaoTemConta = () => {
-    window.location.href = '/cadastro'
+    navigate('/cadastro')
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    validateInputs()
   }
 
-  const verificaConta = async (url: string, email: string, senha: string) => {
+  const cadastraConta = async (url: string, dadosUsuario: Paisagista | Fornecedor) => {
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
+        body: JSON.stringify(dadosUsuario),
       })
   
       if (!response.ok) {
         return false
       }
   
-      const data = await response.json()
-      return data.success
+      await response.json()
+      return true
     } catch{
       return false
     }
@@ -103,10 +142,23 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   const validateInputs = async () => {
     const email = (document.getElementById('email') as HTMLInputElement).value
     const password = (document.getElementById('password') as HTMLInputElement).value
-  
-    let isValid = true
+    let CPF = ''
+    let CNPJ = ''
+    let CEP = ''
+    let EMPRESA = ''
 
+    const nome = (document.getElementById(`nome-${userType}`) as HTMLInputElement).value
+    const celular = (document.getElementById(`celular-${userType}`) as HTMLInputElement).value
+
+    if(userType === 'paisagista') {
+        CPF = (document.getElementById(`cpf-${userType}`) as HTMLInputElement).value
+    }else{
+        CNPJ = (document.getElementById(`cnpj-${userType}`) as HTMLInputElement).value
+        CEP = (document.getElementById(`cep`) as HTMLInputElement).value
+        EMPRESA = (document.getElementById(`empresa`) as HTMLInputElement).value
+    }
   
+    let isValid = true   
     // Validação de e-mail
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true)
@@ -115,6 +167,24 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
     } else {
       setEmailError(false)
       setEmailErrorMessage('')
+    }
+
+    if(!nome || nome.length < 3) {
+      setnomeError(true)
+      setnomeErrorMessage('Por favor, insira um nome válido.')
+      isValid = false
+    }else{
+      setnomeError(false)
+      setnomeErrorMessage('')
+    }
+
+    if(!celular) {
+      setcelularError(true)
+      setcelularErrorMessage('Por favor, insira um celular válido.')
+      isValid = false
+    }else{
+      setcelularError(false)
+      setcelularErrorMessage('')
     }
   
     // Validação de senha
@@ -126,28 +196,85 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       setPasswordError(false)
       setPasswordErrorMessage('')
     }
-  
+
+    if(userType === 'paisagista') {
+      if (!CPF || !/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(CPF)) {
+        setcpfError(true)
+        setcpfErrorMessage('Por favor, insira um cpf válido (formato: XXX.XXX.XXX-XX).')
+        isValid = false
+      }else{
+        setcpfError(false)
+        setcpfErrorMessage('')
+      }
+    }else{
+      if (!CNPJ || !/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(CNPJ)) {
+        setcnpjError(true)
+        setcnpjErrorMessage('Por favor, insira um cnpj válido (formato: XX.XXX.XXX/XXXX-XX).')
+        isValid = false
+      } else {
+        setcnpjError(false)
+        setcnpjErrorMessage('')
+      }
+
+      if(!CEP || !/^\d{5}-\d{3}$/.test(CEP)){
+       setcepError(true)
+       setcepErrorMessage('Por favor, insira um CEP válido (formato: XXXXX-XXX).')
+       isValid = false
+      } else {
+          setcepError(false)  
+          setcepErrorMessage('')
+      }
+
+      if(!EMPRESA){
+        setempresaError(true)
+        setempresaErrorMessage('Por favor, insira o nome da sua empresa.')
+        isValid = false
+      }else{
+        setempresaError(false)
+        setempresaErrorMessage('')
+      }
+      
+    }
+    
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
-      const isCliente = await verificaConta('http://localhost:8080/v1/clientes/login', email, password)
-      if (isCliente) {
-        window.location.href = '/dashboard-cliente'
-        return
-      }
-  
-      const isFornecedor = await verificaConta('http://localhost:8080/v1/fornecedores/login', email, password)
-      if (isFornecedor) {
-        window.location.href = '/dashboard-fornecedor'
-        return
-      }
-  
-      // Se nenhuma conta foi encontrada, definir a mensagem de erro
-      setEmailError(true)
-      setPasswordError(true)
-      toastr.error('Erro: email/senha incorretos!')
+      if(userType === 'paisagista') {
+        const url = 'http://localhost:8080/v1/clientes'
+        const dadosUsuario: Paisagista = {
+          email:  email,
+          senha: password,
+          nome: nome,
+          telefone: parseInt(celular.replace(/\D/g, ''), 10),
+          CPF: parseInt(CPF.replace(/\D/g, ''), 10)
+        }
+        const cadastrado = await cadastraConta(url, dadosUsuario)
+        console.log(cadastrado)
+        if(cadastrado) {
+          toastr.success('Usuário cadastrado com sucesso!')
+          navigate('/dashboard-cliente')
+        }
+    } else{
+      const url = 'http://localhost:8080/v1/fornecedores'
+        const dadosUsuario: Fornecedor = {
+          email:  email,
+          senha: password,
+          nome: nome,
+          telefone: parseInt(celular.replace(/\D/g, ''), 10),
+          CNPJ: parseInt(CNPJ.replace(/\D/g, ''), 10),
+          CEP: CEP,
+          empresa: EMPRESA
+        }
+        const cadastrado = await cadastraConta(url, dadosUsuario)
+        if(cadastrado) {
+          toastr.success('Usuário cadastrado com sucesso!')
+          navigate('/dashboard-fornecedor')
+        }
+    }    
+      
+      // Caso ocorre um erro, exibir mensagem de erro
+      toastr.error('Erro ao cadastrar novo usuário!')
+      return isValid
     }
-  
-    return isValid
   }
 
   
@@ -155,11 +282,11 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <SignInContainer direction="column" justifyContent="space-between">
+      <SignUpContainer direction="column" justifyContent="space-between">
       <Card variant="outlined">
           <Stack direction="row" alignItems="center" spacing={2}>
             <IconButton
-              onClick={() => window.location.href = '/'} // Navegação para a página inicial
+              onClick={() => navigate('/')} // Navegação para a página inicial
             >
               <HomeIcon />
             </IconButton>
@@ -226,7 +353,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
                 helperText={passwordErrorMessage}
                 name="password"
                 placeholder="••••••"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 autoComplete="current-password"
                 autoFocus
@@ -234,33 +361,58 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
                 fullWidth
                 variant="outlined"
                 color={passwordError ? 'error' : 'primary'}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </FormControl>
              {/* Campos adicionais para Paisagista */}
         {userType === 'paisagista' && (
           <>
             <FormControl>
-              <FormLabel>CNPJ</FormLabel>
+              <FormLabel>CPF</FormLabel>
               <TextField
-                id="cnpj-paisagista"
-                placeholder="Digite o CNPJ"
+                error={cpfError}
+                helperText={cpfErrorMessage}
+                id="cpf-paisagista"
+                placeholder="Digite o CPF"
                 fullWidth
+                variant="outlined"
+                color={cpfError ? 'error' : 'primary'}
               />
             </FormControl>
             <FormControl>
               <FormLabel>Nome</FormLabel>
               <TextField
+                error={nomeError}
+                helperText={nomeErrorMessage}
                 id="nome-paisagista"
                 placeholder="Digite seu nome"
                 fullWidth
+                variant="outlined"
+                color={nomeError ? 'error' : 'primary'}
               />
             </FormControl>
             <FormControl>
               <FormLabel>Celular</FormLabel>
               <TextField
+                error={celularError}
+                helperText={celularErrorMessage}
                 id="celular-paisagista"
                 placeholder="Digite seu número de celular"
                 fullWidth
+                variant="outlined"
+                color={celularError ? 'error' : 'primary'}
               />
             </FormControl>
           </>
@@ -272,60 +424,71 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
     <FormControl>
       <FormLabel>CNPJ</FormLabel>
       <TextField
+        error={cnpjError}
+        helperText={cnpjErrorMessage}
         id="cnpj-fornecedor"
         placeholder="Digite o CNPJ"
         fullWidth
+        variant="outlined"
+        color={cnpjError ? 'error' : 'primary'}
       />
     </FormControl>
     <FormControl>
       <FormLabel>Nome</FormLabel>
       <TextField
+        error={nomeError}
+        helperText={nomeErrorMessage}
         id="nome-fornecedor"
         placeholder="Digite seu nome"
         fullWidth
+        variant="outlined"
+        color={nomeError ? 'error' : 'primary'}
       />
     </FormControl>
     <FormControl>
       <FormLabel>Celular</FormLabel>
       <TextField
+        error={celularError}
+        helperText={celularErrorMessage}
         id="celular-fornecedor"
         placeholder="Digite seu número de celular"
         fullWidth
+        variant="outlined"
+        color={celularError ? 'error' : 'primary'}
       />
     </FormControl>
     <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
       <FormControl sx={{ flexGrow: 1 }}>
-        <FormLabel>Estado</FormLabel>
+        <FormLabel>CEP</FormLabel>
         <TextField
-          id="estado-fornecedor"
-          placeholder="Digite o estado"
+          error={cepError}
+          helperText={cepErrorMessage}
+          id="cep"
+          placeholder="Digite o CEP"
           fullWidth
+          variant="outlined"
+          color={cepError ? 'error' : 'primary'}
         />
       </FormControl>
       <FormControl sx={{ flexGrow: 1 }}>
-        <FormLabel>Cidade</FormLabel>
+        <FormLabel>Empresa</FormLabel>
         <TextField
-          id="cidade-fornecedor"
-          placeholder="Digite a cidade"
+          error={empresaError}
+          helperText={empresaErrorMessage}
+          id="empresa"
+          placeholder="Nome da empresa"
           fullWidth
+          variant="outlined"
+          color={empresaError ? 'error' : 'primary'}
         />
       </FormControl>
     </Stack>
-    <FormControl>
-      <FormLabel>Endereço</FormLabel>
-      <TextField
-        id="endereco-fornecedor"
-        placeholder="Digite o endereço"
-        fullWidth
-      />
-    </FormControl>
   </>
 )}
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
             >
               Cadastrar-se
             </Button>
@@ -357,7 +520,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
             </Button>
           </Box>
         </Card>
-      </SignInContainer>
+      </SignUpContainer>
     </AppTheme>
   )
 }

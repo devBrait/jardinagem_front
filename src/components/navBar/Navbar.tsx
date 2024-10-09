@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from "react"
 import {
   AppBar,
   Box,
@@ -12,24 +12,26 @@ import {
   ListItem,
   ListItemText,
   Divider,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
+} from "@mui/material"
+import MenuIcon from "@mui/icons-material/Menu"
+import { useNavigate } from "react-router-dom"
 
 export default function Navbar() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const navigate = useNavigate()
 
   // Funções para redirecionamento de login e cadastro
   const handleLoginClick = () => {
-    window.location.href = "/login"; // Caminho correto para o login
-  };
+    navigate("/login")// Caminho correto para o login
+  }
 
   const handleCadastroClick = () => {
-    window.location.href = "/cadastro"; // Caminho correto para o cadastro
-  };
+   navigate("/cadastro") // Caminho correto para o cadastro
+  }
 
   const toggleDrawer = (open: boolean | ((prevState: boolean) => boolean)) => () => {
-    setDrawerOpen(open);
-  };
+    setDrawerOpen(open)
+  }
 
   return (
     <>
@@ -119,50 +121,59 @@ export default function Navbar() {
         {/* Menu Lateral */}
         <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
         <Box
-          sx={{ height: '100%', backgroundColor: "#98b344" }}
+          sx={{ height: '100%', backgroundColor: "#ffff" }}
           role="presentation"
           onClick={toggleDrawer(false)}
           onKeyDown={toggleDrawer(false)}
         >
-          <List className="text-white cursor-pointer">
+          <List className="text-verde_claro cursor-pointer">
             {['Home', 'Como Funciona', 'Blog', 'Vantagens'].map((text) => (
               <ListItem
                 key={text}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: '#7a9a2a', // Cor de fundo ao passar o mouse
-                    transition: 'background-color 0.3s ease', // Transição suave
-                  },
-                }}
               >
                 <ListItemText primary={text} />
               </ListItem>
             ))}
-            <ListItem
-              onClick={handleLoginClick}
-              sx={{
-                '&:hover': {
-                  backgroundColor: '#7a9a2a',
-                  transition: 'background-color 0.3s ease',
-                },
-              }}
-            >
-              <ListItemText primary="Login" />
+            <ListItem>
+              <Button
+                onClick={handleLoginClick}
+                variant="contained" // Tipo de botão
+                sx={{
+                  backgroundColor: '#ffff', // Cor de fundo
+                  color: "#98b344", // Cor do texto
+                  width: '100%', // Ocupa toda a largura
+                  textTransform: 'none', // Remove o CAPS LOCK
+                  '&:hover': {
+                    backgroundColor: '#6b8a2a', // Cor de fundo ao passar o mouse
+                    transition: 'background-color 0.3s ease',
+                  },
+                }}
+              >
+                Login
+              </Button>
             </ListItem>
-            <ListItem
-              onClick={handleCadastroClick}
-              sx={{
-                '&:hover': {
+            <ListItem>
+              <Button
+                onClick={handleCadastroClick}
+                variant="contained" // Tipo de botão
+                sx={{
                   backgroundColor: '#7a9a2a',
-                  transition: 'background-color 0.3s ease',
-                },
-              }}
-            >
-              <ListItemText primary="Cadastro" />
+                  color: 'white',
+                  width: '100%',
+                  textTransform: 'none', // Remove o CAPS LOCK
+                  '&:hover': {
+                    backgroundColor: '#6b8a2a',
+                    transition: 'background-color 0.3s ease',
+                  },
+                }}
+              >
+                Cadastro
+              </Button>
             </ListItem>
           </List>
         </Box>
-    </Drawer>
+      </Drawer>
+
     </>
   )
 }

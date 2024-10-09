@@ -1,4 +1,3 @@
-import * as React from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
@@ -19,6 +18,11 @@ import ForgotPassword from './ForgotPassword'
 import { GoogleIcon, UmEntreposto } from './CustomIcons'
 import AppTheme from './theme/AppTheme'
 import toastr from './../../toastrConfig'
+import { FormEvent, useState } from 'react'
+import { InputAdornment } from '@mui/material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../AuthContext'
 
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -60,25 +64,32 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }))
 
 export default function  SignIn(props: { disableCustomTheme?: boolean }) {
-  const [emailError, setEmailError] = React.useState(false)
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('')
-  const [passwordError, setPasswordError] = React.useState(false)
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('')
-  const [open, setOpen] = React.useState(false)
+  const [emailError, setEmailError] = useState(false)
+  const [emailErrorMessage, setEmailErrorMessage] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState('')
+  const [open, setOpen] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const handleClickOpen = () => {
     setOpen(true)
   }
 
   const handleNaoTemConta = () => {
-    window.location.href = '/cadastro'
+    navigate('/cadastro')
+  }
+
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev)
   }
 
   const handleClose = () => {
     setOpen(false)
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
   }
 
@@ -132,13 +143,17 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
     if (isValid) {
       const isCliente = await verificaConta('http://localhost:8080/v1/clientes/login', email, password)
       if (isCliente) {
-        window.location.href = '/dashboard-cliente'
+        const userData = { email: email }; 
+        login(userData);
+        navigate('/dashboard-cliente')
         return
       }
   
       const isFornecedor = await verificaConta('http://localhost:8080/v1/fornecedores/login', email, password)
       if (isFornecedor) {
-        window.location.href = '/dashboard-fornecedor'
+        const userData = { email: email }; 
+        login(userData);
+        navigate('/dashboard-fornecedor')
         return
       }
   
@@ -159,7 +174,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       <Card variant="outlined">
           <Stack direction="row" alignItems="center" spacing={2}>
             <IconButton
-              onClick={() => window.location.href = '/'} // Navegação para a página inicial
+              onClick={() => navigate('/')} // Navegação para a página inicial
             >
               <HomeIcon />
             </IconButton>
@@ -202,33 +217,46 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
               />
             </FormControl>
             <FormControl>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <FormLabel htmlFor="password">Senha</FormLabel>
-                <Link
-                  underline='none'
-                  component="button"
-                  onClick={handleClickOpen}
-                  variant="body2"
-                  sx={{ alignSelf: 'baseline'}}
-                >
-                  Esqueceu sua senha?
-                </Link>
-              </Box>
-              <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                name="password"
-                placeholder="••••••"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={passwordError ? 'error' : 'primary'}
-              />
-            </FormControl>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <FormLabel htmlFor="password">Senha</FormLabel>
+              <Link
+                underline='none'
+                component="button"
+                onClick={handleClickOpen}
+                variant="body2"
+                sx={{ alignSelf: 'baseline' }}
+              >
+                Esqueceu sua senha?
+              </Link>
+            </Box>
+            <TextField
+              error={passwordError}
+              helperText={passwordErrorMessage}
+              name="password"
+              placeholder="••••••"
+              type={showPassword ? 'text' : 'password'} // Altera o tipo dependendo do estado
+              id="password"
+              autoComplete="current-password"
+              autoFocus
+              required
+              fullWidth
+              variant="outlined"
+              color={passwordError ? 'error' : 'primary'}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </FormControl>
             <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Lembrar conta"
