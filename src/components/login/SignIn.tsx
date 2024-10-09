@@ -143,7 +143,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
     if (isValid) {
       const isCliente = await verificaConta('http://localhost:8080/v1/clientes/login', email, password)
       if (isCliente) {
-        const userData = { email: email }; 
+        const userData = { email: email, senha: password }; 
         login(userData);
         navigate('/dashboard-cliente')
         return
@@ -151,7 +151,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   
       const isFornecedor = await verificaConta('http://localhost:8080/v1/fornecedores/login', email, password)
       if (isFornecedor) {
-        const userData = { email: email }; 
+        const userData = { email: email, senha: password }; 
         login(userData);
         navigate('/dashboard-fornecedor')
         return

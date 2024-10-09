@@ -1,25 +1,20 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 
-// Defina a interface para os dados do usuário
 interface User {
-  email: string
+  email: string,
+  senha: string
 }
-
-// Defina a interface para o contexto
 interface AuthContextType {
   user: User | null
   login: (userData: User) => void
   logout: () => void
 }
 
-// Crie o contexto fora do componente para evitar recriação em cada render
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Provedor de contexto
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
 
-  // Memorizando as funções para evitar redefinição em cada render
   const login = useCallback((userData: User) => {
     setUser(userData) // Salve os dados do usuário
   }, [])
@@ -36,6 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 }
 
 // Hook para usar o contexto
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)
   if (!context) {

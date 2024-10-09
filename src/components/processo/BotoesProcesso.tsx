@@ -2,7 +2,7 @@ import { Box, Typography, Divider, Stack } from '@mui/material';
 
 export default function BotoesProcesso() {
     return (
-        <Box className="flex flex-col mx-auto mt-24 mb-24 items-center px-16 md:ml-24">
+        <Box className="flex flex-col mx-auto mt-24 mb-24 items-center px-16 md:ml-16">
             <Stack 
                 direction={{ xs: "column", md: "row" }}
                 spacing={4} 
