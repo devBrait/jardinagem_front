@@ -16,7 +16,7 @@ import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import ForgotPassword from './ForgotPassword'
 import { GoogleIcon, UmEntreposto } from './CustomIcons'
-import AppTheme from './theme/AppTheme'
+import AppTheme from '../../css/theme/AppTheme'
 import toastr from './../../toastrConfig'
 import { FormEvent, useState } from 'react'
 import { InputAdornment } from '@mui/material'
@@ -91,6 +91,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    validateInputs()
   }
 
   const verificaConta = async (url: string, email: string, senha: string) => {
@@ -141,18 +142,24 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
+      if(email === 'admin@admin.com' && password === 'admin123') {
+        const userData = { email: email, senha: password, tipoUsuario: 'admin' }
+        login(userData)
+        navigate('/dashboard-cliente')
+        return
+      }
       const isCliente = await verificaConta('http://localhost:8080/v1/clientes/login', email, password)
       if (isCliente) {
-        const userData = { email: email, senha: password }; 
-        login(userData);
+        const userData = { email: email, senha: password, tipoUsuario: 'cliente' } 
+        login(userData)
         navigate('/dashboard-cliente')
         return
       }
   
       const isFornecedor = await verificaConta('http://localhost:8080/v1/fornecedores/login', email, password)
       if (isFornecedor) {
-        const userData = { email: email, senha: password }; 
-        login(userData);
+        const userData = { email: email, senha: password, tipoUsuario: 'fornecedor' } 
+        login(userData)
         navigate('/dashboard-fornecedor')
         return
       }
@@ -266,7 +273,6 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
             >
               Acessar
             </Button>

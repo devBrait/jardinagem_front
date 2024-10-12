@@ -86,6 +86,8 @@ export default function Navbar() {
               margin: 0,
               textAlign: { xs: 'center', md: 'left'}, // Centraliza em telas pequenas
               flexGrow: 1,
+              marginBottom: { xs: '6px', md: '0' },
+              padding: { xs: '12px', md: '0' },
             }}
           >
             <span style={{ color: "#98b344" }}>um</span>entreposto
@@ -143,23 +145,26 @@ export default function Navbar() {
 
           {/* Botões de Login e Cadastro */}
           <Box display={{ xs: 'none', md: 'flex' }} className="space-x-4">
-            {user ? (
-              <>
-                <IconButton onClick={handleAvatarClick}>
-                  <Avatar sx={{ bgcolor: "#98b344", marginRight: '100px'}}>
-                    {user.email.charAt(0).toUpperCase()} {/* Iniciais do usuário */}
-                  </Avatar>
-                </IconButton>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleMenuClose}
-                  sx={{ mt: "45px" }}
-                >
-                  <MenuItem onClick={handlePerfil}>Meu perfil</MenuItem>
-                  <MenuItem onClick={handleLogout}>Sair</MenuItem>
-                </Menu>
-              </>
+          {user ? (
+            <>
+              <IconButton onClick={handleAvatarClick} sx={{ padding: 0 }}>
+                <Avatar sx={{ bgcolor: "#98b344" }}>
+                  {user.email.charAt(0).toUpperCase()} {/* Iniciais do usuário */}
+                </Avatar>
+              </IconButton>
+              {/* Contêiner vazio para manter o espaço sem afetar a área de clique */}
+              <Box sx={{ width: '100px' }} /> {/* Ajuste a largura conforme necessário */}
+              
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                sx={{ mt: "45px" }}
+              >
+                <MenuItem onClick={handlePerfil}>Meu perfil</MenuItem>
+                <MenuItem onClick={handleLogout}>Sair</MenuItem>
+              </Menu>
+            </>
             ) : (
             <>
               <Button

@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 
 interface User {
-  email: string,
+  email: string
   senha: string
+  tipoUsuario: string
 }
+
 interface AuthContextType {
   user: User | null
   login: (userData: User) => void
@@ -15,12 +17,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
 
+  // Método de login
   const login = useCallback((userData: User) => {
-    setUser(userData) // Salve os dados do usuário
+    setUser(userData) 
   }, [])
 
+  // Método de logout
   const logout = useCallback(() => {
-    setUser(null) // Limpa os dados do usuário
+    setUser(null)
   }, [])
 
   return (

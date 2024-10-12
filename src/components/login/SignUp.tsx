@@ -14,7 +14,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import { GoogleIcon, UmEntreposto } from './CustomIcons'
-import AppTheme from './theme/AppTheme'
+import AppTheme from '../../css/theme/AppTheme'
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import { ChangeEvent, FormEvent, useState } from 'react'
@@ -178,7 +178,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
       setnomeErrorMessage('')
     }
 
-    if(!celular) {
+    if(!celular || !/^[1-9]{2}9[0-9]{8}$/.test(celular)) {
       setcelularError(true)
       setcelularErrorMessage('Por favor, insira um celular válido.')
       isValid = false
@@ -238,6 +238,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
+      let cadastrado = false
       if(userType === 'paisagista') {
         const url = 'http://localhost:8080/v1/clientes'
         const dadosUsuario: Paisagista = {
@@ -247,8 +248,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           telefone: parseInt(celular.replace(/\D/g, ''), 10),
           CPF: parseInt(CPF.replace(/\D/g, ''), 10)
         }
-        const cadastrado = await cadastraConta(url, dadosUsuario)
-        console.log(cadastrado)
+        cadastrado = await cadastraConta(url, dadosUsuario)
         if(cadastrado) {
           toastr.success('Usuário cadastrado com sucesso!')
           navigate('/dashboard-cliente')
@@ -264,7 +264,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           CEP: CEP,
           empresa: EMPRESA
         }
-        const cadastrado = await cadastraConta(url, dadosUsuario)
+        cadastrado = await cadastraConta(url, dadosUsuario)
         if(cadastrado) {
           toastr.success('Usuário cadastrado com sucesso!')
           navigate('/dashboard-fornecedor')
@@ -272,7 +272,9 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     }    
       
       // Caso ocorre um erro, exibir mensagem de erro
-      toastr.error('Erro ao cadastrar novo usuário!')
+      if(!cadastrado) {
+        toastr.error('Erro ao cadastrar novo usuário!')
+      }
       return isValid
     }
   }

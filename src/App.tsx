@@ -1,10 +1,9 @@
-import { CssBaseline } from "@mui/material";
-import Footer from "./components/footer/Footer";
-import CorpoCentral from "./components/header/CorpoCentral";
-import Header from "./components/header/Header";
-import Navbar from "./components/navBar/Navbar";
-import BotoesProcesso from "./components/processo/BotoesProcesso";
-
+import { CssBaseline } from "@mui/material"
+import Footer from "./components/footer/Footer"
+import CorpoCentral from "./components/header/CorpoCentral"
+import Header from "./components/header/Header"
+import Navbar from "./components/navBar/Navbar"
+import BotoesProcesso from "./components/processo/BotoesProcesso"
 
 export default function App() {
   return (
@@ -23,5 +22,5 @@ export default function App() {
       </div>
       </CssBaseline>
     </>
-  );
+  )
 }
