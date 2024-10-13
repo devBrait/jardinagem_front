@@ -1,4 +1,8 @@
-@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+    .bg-radial-custom {
+      background: radial-gradient(ellipse at 10% 50%, #DAE3BE, #ffff); /* Ajuste a segunda cor se necessário */
+    }
+}
