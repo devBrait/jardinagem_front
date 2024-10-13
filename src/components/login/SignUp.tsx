@@ -22,6 +22,7 @@ import toastr from '../../toastrConfig'
 import { InputAdornment } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../AuthContext'
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -64,8 +65,10 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 export default function  SignUp(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = useState(false)
   const [emailErrorMessage, setEmailErrorMessage] = useState('')
+  const [cpf, setCpf] = useState('')
   const [cpfError, setcpfError] = useState(false)
   const [cpfErrorMessage, setcpfErrorMessage] = useState('')
+  const [cnpj, setCnpj] = useState('')
   const [cnpjError, setcnpjError] = useState(false)
   const [cnpjErrorMessage, setcnpjErrorMessage] = useState('')
   const [nomeError, setnomeError] = useState(false)
@@ -81,6 +84,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
   const [userType, setUserType] = useState('paisagista') 
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const { login } = useAuth()
 
 
   interface Paisagista {
@@ -251,6 +255,8 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         cadastrado = await cadastraConta(url, dadosUsuario)
         if(cadastrado) {
           toastr.success('Usuário cadastrado com sucesso!')
+          const userData = { email: email, senha: password, tipoUsuario: 'cliente' } 
+          login(userData)
           navigate('/dashboard-cliente')
         }
     } else{
@@ -267,6 +273,8 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         cadastrado = await cadastraConta(url, dadosUsuario)
         if(cadastrado) {
           toastr.success('Usuário cadastrado com sucesso!')
+          const userData = { email: email, senha: password, tipoUsuario: 'fornecedor' } 
+          login(userData)
           navigate('/dashboard-fornecedor')
         }
     }    
@@ -277,6 +285,50 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
       }
       return isValid
     }
+  }
+
+  const formatCpf = (value: string) => {
+    value = value.replace(/\D/g, '')
+
+    // Aplica a formatação
+    if (value.length > 9) {
+      value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+    } else if (value.length > 6) {
+      value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3')
+    } else if (value.length > 3) {
+      value = value.replace(/(\d{3})(\d{1,3})/, '$1.$2')
+    }
+
+    return value
+  }
+
+  const handleCpfChange = (event: { target: { value: string } }) => {
+    const value = event.target.value
+    const formattedValue = formatCpf(value)
+    setCpf(formattedValue)
+  }
+
+  const formatCnpj = (value: string) => {
+    value = value.replace(/\D/g, '')
+    // Aplica a formatação
+    if (value.length > 12) {
+      value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+    } else if (value.length > 8) {
+      value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4')
+    } else if (value.length > 5) {
+      value = value.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3')
+    } else if (value.length > 2) {
+      value = value.replace(/(\d{2})(\d{1,3})/, '$1.$2')
+    }
+
+    return value
+  }
+
+  // Função de tratamento de alteração no campo de texto
+  const handleCnpjChange = (event: { target: { value: string } }) => {
+    const value = event.target.value
+    const formattedValue = formatCnpj(value)
+    setCnpj(formattedValue)
   }
 
   
@@ -391,6 +443,8 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
                 fullWidth
                 variant="outlined"
                 color={cpfError ? 'error' : 'primary'}
+                value={cpf}
+                onChange={handleCpfChange}
               />
             </FormControl>
             <FormControl>
@@ -421,7 +475,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         )}
 
         {/* Campos adicionais para Fornecedor */}
-{userType === 'fornecedor' && (
+  {userType === 'fornecedor' && (
   <>
     <FormControl>
       <FormLabel>CNPJ</FormLabel>
@@ -433,6 +487,8 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         fullWidth
         variant="outlined"
         color={cnpjError ? 'error' : 'primary'}
+        value={cnpj}
+        onChange={handleCnpjChange}
       />
     </FormControl>
     <FormControl>

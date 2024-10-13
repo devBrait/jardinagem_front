@@ -46,7 +46,11 @@ export default function Navbar() {
   }
 
   const handlePerfil = () => {
-    navigate("/dashboard-cliente")
+    if(user?.tipoUsuario == 'cliente'){
+      navigate("/dashboard-cliente")
+    }else if(user?.tipoUsuario == 'fornecedor'){
+      navigate("/dashboard-fornecedor")
+    }
   }
  
 
