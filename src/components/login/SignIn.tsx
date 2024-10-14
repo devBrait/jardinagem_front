@@ -72,6 +72,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const apiurl = import.meta.env.VITE_APP_API_URL
 
   const handleClickOpen = () => {
     setOpen(true)
@@ -148,7 +149,8 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
         navigate('/dashboard-cliente')
         return
       }
-      const isCliente = await verificaConta('http://localhost:8080/v1/clientes/login', email, password)
+
+      const isCliente = await verificaConta(`${apiurl}/clientes/login`, email, password)
       if (isCliente) {
         const userData = { email: email, senha: password, tipoUsuario: 'cliente' } 
         login(userData)
@@ -156,7 +158,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
         return
       }
   
-      const isFornecedor = await verificaConta('http://localhost:8080/v1/fornecedores/login', email, password)
+      const isFornecedor = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
       if (isFornecedor) {
         const userData = { email: email, senha: password, tipoUsuario: 'fornecedor' } 
         login(userData)
