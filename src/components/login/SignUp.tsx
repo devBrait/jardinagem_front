@@ -85,6 +85,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   const { login } = useAuth()
+  const apiurl = import.meta.env.VITE_APP_API_URL
 
 
   interface Paisagista {
@@ -244,7 +245,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     if (isValid) {
       let cadastrado = false
       if(userType === 'paisagista') {
-        const url = 'http://localhost:8080/v1/clientes'
+        const url = `${apiurl}/v1/clientes`
         const dadosUsuario: Paisagista = {
           email:  email,
           senha: password,
@@ -260,7 +261,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           navigate('/dashboard-cliente')
         }
     } else{
-      const url = 'http://localhost:8080/v1/fornecedores'
+      const url = `${apiurl}/v1/fornecedores`
         const dadosUsuario: Fornecedor = {
           email:  email,
           senha: password,
