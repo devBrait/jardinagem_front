@@ -245,7 +245,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     if (isValid) {
       let cadastrado = false
       if(userType === 'paisagista') {
-        const url = `${apiurl}/v1/clientes`
+        const url = `${apiurl}/clientes`
         const dadosUsuario: Paisagista = {
           email:  email,
           senha: password,
@@ -261,7 +261,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           navigate('/dashboard-cliente')
         }
     } else{
-      const url = `${apiurl}/v1/fornecedores`
+      const url = `${apiurl}/fornecedores`
         const dadosUsuario: Fornecedor = {
           email:  email,
           senha: password,
