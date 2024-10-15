@@ -8,36 +8,53 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useState } from 'react'
 import HomeIcon from '@mui/icons-material/Home'
-import Conta from '../conta/Conta'
 import Configuracoes from '../conta/Configuracoes'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 import ListaPedidos from '../pedidos/ListaPedidos'
 import NovoPedido from '../pedidos/NovoPedido'
+import ListaSolicitacoes from '../pedidos/ListaSolicitacoes'
+import CadastroPlantas from '../pedidos/CadastroPlantas'
+import YardIcon from '@mui/icons-material/Yard'
+import InventoryIcon from '@mui/icons-material/Inventory'
+import ContaCliente from '../conta/ContaCliente'
+import ContaFornecedor from '../conta/ContaFornecedor'
 
 interface MenuItem {
     text: string
     icon: JSX.Element
     value: string
-    component?: JSX.Element // Opcional, pois nem todos os itens terão um componente associado
+    component?: JSX.Element 
 }
 
 export default function SideNavbar({ setCurrentComponent }: { setCurrentComponent: (component: JSX.Element) => void }) {
+  const { user } = useAuth()
 
   const handleNovoPedidoClick = () => {
     setCurrentComponent(<NovoPedido />)
     setActiveItem('facaSeuPedido')
   }
 
-  const menuItems: MenuItem[] = [
+  const handleCadastroPlantaClick = () => {
+    setCurrentComponent(<CadastroPlantas />)
+    setActiveItem('cadastroPlantas')
+  }
+
+  const menuItems: MenuItem[] = user?.tipoUsuario === 'cliente' ? [
     { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home'},
     { text: 'Meus Pedidos', icon: <ShoppingCartIcon sx={{ marginRight: 3 }} />, value: 'meusPedidos', component: <ListaPedidos handleNovoPedidoClick={handleNovoPedidoClick} /> },
     { text: 'Faça seu Pedido', icon: <AddShoppingCartIcon sx={{ marginRight: 3 }} />, value: 'facaSeuPedido', component: <NovoPedido /> },
-    { text: 'Conta', icon: <AccountCircleIcon sx={{ marginRight: 3 }} />, value: 'conta', component: <Conta /> },
+    { text: 'Conta', icon: <AccountCircleIcon sx={{ marginRight: 3 }} />, value: 'conta', component: <ContaCliente /> },
+    { text: 'Configurações', icon: <SettingsIcon sx={{ marginRight: 3 }} />, value: 'configuracoes', component: <Configuracoes /> },
+  ] : [
+    { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home'},
+    { text: 'Solicitações', icon: <InventoryIcon sx={{ marginRight: 3 }} />, value: 'solicitacoes', component: <ListaSolicitacoes handleCadastroPlantaClick={handleCadastroPlantaClick}/> },
+    { text: 'Cadastro de Plantas', icon: <YardIcon sx={{ marginRight: 3 }} />, value: 'cadastroPlantas', component: <CadastroPlantas /> },
+    { text: 'Conta', icon: <AccountCircleIcon sx={{ marginRight: 3 }} />, value: 'conta', component: <ContaFornecedor /> },
     { text: 'Configurações', icon: <SettingsIcon sx={{ marginRight: 3 }} />, value: 'configuracoes', component: <Configuracoes /> },
   ]
-
-  const [activeItem, setActiveItem] = useState('meusPedidos')
+  
+  const [activeItem, setActiveItem] = useState(user?.tipoUsuario === 'cliente' ? 'meusPedidos' : 'solicitacoes')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAuth()
@@ -47,7 +64,6 @@ export default function SideNavbar({ setCurrentComponent }: { setCurrentComponen
   }
 
   const sairDaConta = () => {
-    console.log('Saindo da conta...')
     logout()
     navigate('/')
   }
@@ -143,6 +159,7 @@ export default function SideNavbar({ setCurrentComponent }: { setCurrentComponen
                 backgroundColor: '#f5f5f5',
               },
             }}
+            onClick={sairDaConta} 
           >
             <LogoutIcon sx={{ marginRight: 2 }} />
             Sair da Conta

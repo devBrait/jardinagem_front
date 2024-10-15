@@ -48,7 +48,7 @@ export default function Navbar() {
   const handlePerfil = () => {
     if(user?.tipoUsuario == 'cliente'){
       navigate("/dashboard-cliente")
-    }else if(user?.tipoUsuario == 'fornecedor'){
+    }else if(user?.tipoUsuario == 'fornecedor' || user?.tipoUsuario == 'admin'){
       navigate("/dashboard-fornecedor")
     }
   }
@@ -99,7 +99,7 @@ export default function Navbar() {
 
           {user ? (
             <>
-            <Box display={{ xs: 'right', md: 'none' }} className="space-x-4 ml-6">
+            <Box display={{ xs: 'right', md: 'none' }} className="space-x-4 ml-2">
               <IconButton onClick={handleAvatarClick}>
                 <Avatar sx={{ bgcolor: "#98b344"}}>
                   {user.email.charAt(0).toUpperCase()}
