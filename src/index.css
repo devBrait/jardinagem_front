@@ -1,3 +1,4 @@
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -5,4 +6,11 @@
     .bg-radial-custom {
       background: radial-gradient(ellipse at 10% 50%, #DAE3BE, #ffff); /* Ajuste a segunda cor se necessário */
     }
+}
+
+@layer base {
+  body {
+    @apply bg-white; /* Aplica a classe bg-white ao body */
+    /* Você pode adicionar mais estilos aqui, se necessário */
+  }
 }

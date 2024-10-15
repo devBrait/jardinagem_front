@@ -10,7 +10,6 @@ export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedi
       itens: number
       empresa: string
       status: string
-      role: string
     }
 
   const [elementoMenu, setelementoMenu] = useState<null | HTMLElement>(null) // Estado para o Menu
@@ -20,9 +19,9 @@ export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedi
 
 
   const pedidos = [
-    { id: 1, name: 'Pedido #123', itens: 12, empresa: 'Empresa X', status: 'Ativo', role: 'Designer' },
-    { id: 2, name: 'Pedido #456', itens: 2, empresa: 'Empresa Y', status: 'Cancelado', role: 'Líder' },
-    { id: 3, name: 'Pedido #789', itens: 7, empresa: 'Empresa Z', status: 'Preparando', role: 'Desenvolvedor' },
+    { id: 1, name: 'Pedido #123', itens: 12, empresa: 'Empresa X', status: 'Ativo'},
+    { id: 2, name: 'Pedido #456', itens: 2, empresa: 'Empresa Y', status: 'Cancelado'},
+    { id: 3, name: 'Pedido #789', itens: 7, empresa: 'Empresa Z', status: 'Preparando'},
   ]
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, pedido: Pedido) => {

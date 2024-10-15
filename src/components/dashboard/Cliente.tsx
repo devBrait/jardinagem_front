@@ -10,7 +10,7 @@ import SideNavbar from '../navBar/SideNavbar'
 
 export default function Cliente(props: { disableCustomTheme?: boolean }) {
   const handleNovoPedidoClick = () => {
-    setCurrentComponent(<NovoPedido />) // Muda o componente para NovoPedido
+    setCurrentComponent(<NovoPedido />)
   }
   const [currentComponent, setCurrentComponent] = useState(<ListaPedidos handleNovoPedidoClick={handleNovoPedidoClick} />) // ListaPedidos como padrão
   const { user } = useAuth()

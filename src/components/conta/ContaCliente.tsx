@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, Typography, Button, TextField, FormLabel, Divider } from "@mui/material";
 
-export default function Conta() {
+export default function ContaCliente() {
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom>
@@ -94,5 +94,5 @@ export default function Conta() {
         </Card>
       </Box>
     </Box>
-  );
+  )
 }

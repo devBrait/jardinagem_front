@@ -92,7 +92,6 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    validateInputs()
   }
 
   const verificaConta = async (url: string, email: string, senha: string) => {
@@ -146,7 +145,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       if(email === 'admin@admin.com' && password === 'admin123') {
         const userData = { email: email, senha: password, tipoUsuario: 'admin' }
         login(userData)
-        navigate('/dashboard-cliente')
+        navigate('/dashboard-fornecedor')
         return
       }
 
@@ -231,7 +230,10 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
               <Link
                 underline='none'
                 component="button"
-                onClick={handleClickOpen}
+                onClick={(event) => {
+                  event.preventDefault()
+                  handleClickOpen()
+                }}
                 variant="body2"
                 sx={{ alignSelf: 'baseline' }}
               >
@@ -275,6 +277,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
+              onClick={validateInputs}
             >
               Acessar
             </Button>
