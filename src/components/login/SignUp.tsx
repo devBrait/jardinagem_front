@@ -15,8 +15,8 @@ import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import { GoogleIcon, UmEntreposto } from './CustomIcons'
 import AppTheme from '../../css/theme/AppTheme'
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
+import Radio from '@mui/material/Radio'
+import RadioGroup from '@mui/material/RadioGroup'
 import { ChangeEvent, FormEvent, useState } from 'react'
 import toastr from '../../toastrConfig'
 import { InputAdornment } from '@mui/material'
@@ -54,7 +54,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
   ...theme.applyStyles('dark', {
     backgroundImage: 'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
   }),
-}));
+}))
 
 export default function  SignUp(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = useState(false)
@@ -83,21 +83,21 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
 
 
   interface Paisagista {
-    email: string;
-    senha: string;
-    nome: string;
-    telefone: number;
-    CPF: number;
+    email: string
+    senha: string
+    nome: string
+    telefone: number
+    CPF: number
   }
 
   interface Fornecedor {
-    email: string;
-    senha: string;
-    nome: string;
-    telefone: number;
-    CNPJ: number;
-    CEP: string;
-    empresa: string;
+    email: string
+    senha: string
+    nome: string
+    telefone: number
+    CNPJ: number
+    CEP: string
+    empresa: string
   }
 
   const handleClickShowPassword = () => {
@@ -130,9 +130,9 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
       if (!response.ok) {
         return false
       }
-  
-      await response.json()
-      return true
+
+      const data = await response.json()
+      return data.token 
     } catch{
       return false
     }
@@ -237,49 +237,50 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
-      let cadastrado = false
-      if(userType === 'paisagista') {
+      let token = null
+    
+      if (userType === 'paisagista') {
         const url = `${apiurl}/clientes`
         const dadosUsuario: Paisagista = {
-          email:  email,
+          email: email,
           senha: password,
           nome: nome,
           telefone: parseInt(celular.replace(/\D/g, ''), 10),
-          CPF: parseInt(CPF.replace(/\D/g, ''), 10)
+          CPF: parseInt(CPF.replace(/\D/g, ''), 10),
         }
-        cadastrado = await cadastraConta(url, dadosUsuario)
-        if(cadastrado) {
+        
+        token = await cadastraConta(url, dadosUsuario)
+        if (token) {
           toastr.success('Usuário cadastrado com sucesso!')
-          const userData = { email: email, senha: password, tipoUsuario: 'cliente' } 
-          login(userData)
+          const userData = { email: email, tipoUsuario: 'cliente' }
+          login(userData, token) // Armazena o token no contexto
           navigate('/dashboard-cliente')
         }
-    } else{
-      const url = `${apiurl}/fornecedores`
+      } else {
+
+        const url = `${apiurl}/fornecedores`
         const dadosUsuario: Fornecedor = {
-          email:  email,
+          email: email,
           senha: password,
           nome: nome,
           telefone: parseInt(celular.replace(/\D/g, ''), 10),
           CNPJ: parseInt(CNPJ.replace(/\D/g, ''), 10),
           CEP: CEP,
-          empresa: EMPRESA
+          empresa: EMPRESA,
         }
-        cadastrado = await cadastraConta(url, dadosUsuario)
-        if(cadastrado) {
+        token = await cadastraConta(url, dadosUsuario)
+        if (token) {
           toastr.success('Usuário cadastrado com sucesso!')
-          const userData = { email: email, senha: password, tipoUsuario: 'fornecedor' } 
-          login(userData)
+          const userData = { email: email, tipoUsuario: 'fornecedor' }
+          login(userData, token)
           navigate('/dashboard-fornecedor')
         }
-    }    
-      
-      // Caso ocorre um erro, exibir mensagem de erro
-      if(!cadastrado) {
+      }  
+      if (!token) {
         toastr.error('Erro ao cadastrar novo usuário!')
       }
       return isValid
-    }
+    }    
   }
 
   const formatCpf = (value: string) => {

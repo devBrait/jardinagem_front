@@ -2,13 +2,13 @@ import React, { createContext, useContext, useState, ReactNode, useCallback } fr
 
 interface User {
   email: string
-  senha: string
   tipoUsuario: string
 }
 
 interface AuthContextType {
   user: User | null
-  login: (userData: User) => void
+  token: string | null
+  login: (userData: User, token: string) => void
   logout: () => void
 }
 
@@ -16,19 +16,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
 
   // Método de login
-  const login = useCallback((userData: User) => {
-    setUser(userData) 
+  const login = useCallback((userData: User, token: string) => {
+    setUser(userData)
+    setToken(token);// Armazena o token
+    localStorage.setItem('token', token)
   }, [])
 
   // Método de logout
   const logout = useCallback(() => {
     setUser(null)
+    setToken(null)// Limpa o token
+    localStorage.removeItem('token')
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
