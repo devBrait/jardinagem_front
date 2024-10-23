@@ -80,7 +80,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate()
   const { login } = useAuth()
   const apiurl = import.meta.env.VITE_APP_API_URL
-
+  const admin = import.meta.env.VITE_USER_ADMIN
 
   interface Paisagista {
     email: string
@@ -123,6 +123,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     try {
       const response = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dadosUsuario),
       })
@@ -132,7 +133,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
       }
 
       const data = await response.json()
-      return data.token 
+      return data 
     } catch{
       return false
     }
@@ -237,8 +238,13 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
-      let token = null
-    
+      let data = null
+      
+      if(email == admin){
+        toastr.error('Impossível criar uma conta de usuário, com esse email!')
+        return
+      }
+
       if (userType === 'paisagista') {
         const url = `${apiurl}/clientes`
         const dadosUsuario: Paisagista = {
@@ -249,11 +255,11 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           CPF: parseInt(CPF.replace(/\D/g, ''), 10),
         }
         
-        token = await cadastraConta(url, dadosUsuario)
-        if (token) {
+        data = await cadastraConta(url, dadosUsuario)
+        if (data) {
           toastr.success('Usuário cadastrado com sucesso!')
           const userData = { email: email, tipoUsuario: 'cliente' }
-          login(userData, token) // Armazena o token no contexto
+          login(userData) // Armazena o token no contexto
           navigate('/dashboard-cliente')
         }
       } else {
@@ -268,15 +274,15 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           CEP: CEP,
           empresa: EMPRESA,
         }
-        token = await cadastraConta(url, dadosUsuario)
-        if (token) {
+        data = await cadastraConta(url, dadosUsuario)
+        if (data) {
           toastr.success('Usuário cadastrado com sucesso!')
           const userData = { email: email, tipoUsuario: 'fornecedor' }
-          login(userData, token)
+          login(userData)
           navigate('/dashboard-fornecedor')
         }
       }  
-      if (!token) {
+      if (!data) {
         toastr.error('Erro ao cadastrar novo usuário!')
       }
       return isValid

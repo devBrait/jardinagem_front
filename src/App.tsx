@@ -11,9 +11,9 @@ export default function App() {
     <CssBaseline>
       <div>
         <div className="m-0 flex flex-col min-h-screen">
-          <div className="flex align-items-center py-4 justify-content-between p-2">
-            <Navbar/>
-          </div>
+        <div className="flex align-items-center py-4 justify-content-between">
+          <Navbar />
+        </div>
           <Header/>
           <CorpoCentral/>
           <BotoesProcesso/>

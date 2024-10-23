@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   AppBar,
   Box,
@@ -24,6 +24,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const navigate = useNavigate()
+  const [scrollPosition, setScrollPosition] = useState(0)
   const { user, logout } = useAuth()
 
   // Funções para redirecionamento de login e cadastro
@@ -46,9 +47,13 @@ export default function Navbar() {
   }
 
   const handlePerfil = () => {
-    if(user?.tipoUsuario == 'cliente'){
+    if(user?.tipoUsuario == 'admin'){
+      navigate("/dashboard-admin")
+    }
+    else if(user?.tipoUsuario == 'cliente'){
       navigate("/dashboard-cliente")
-    }else if(user?.tipoUsuario == 'fornecedor' || user?.tipoUsuario == 'admin'){
+    }
+    else if(user?.tipoUsuario == 'fornecedor'){
       navigate("/dashboard-fornecedor")
     }
   }
@@ -62,9 +67,30 @@ export default function Navbar() {
     setDrawerOpen(open)
   }
 
+    // Adiciona o evento de scroll para ajustar a opacidade do AppBar
+    useEffect(() => {
+      const handleScroll = () => {
+        const position = window.pageYOffset
+        setScrollPosition(position)
+      }
+  
+      window.addEventListener("scroll", handleScroll)
+      return () => {
+        window.removeEventListener("scroll", handleScroll)
+      }
+    }, [])
+
+    
+    const appBarOpacity = scrollPosition > 50 ? 0.8 : 1
+
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: "#fff", boxShadow: "none" }}>
+      <AppBar position="fixed" sx={{
+          backgroundColor: `rgba(255, 255, 255, ${appBarOpacity})`,
+          boxShadow: "none",
+          transition: "background-color 0.3s ease-in-out",
+          paddingTop: '16px',
+        }}>
         <Toolbar className="px-[50px] flex justify-between">
           {/* Ícone do menu */}
           <IconButton

@@ -2,7 +2,7 @@ import { Box, Divider, Typography } from '@mui/material';
 
 export default function Header() {
     return (
-        <Box className="flex flex-col md:flex-row items-center justify-between p-4 md:mt-12" 
+        <Box className="flex flex-col md:flex-row items-center justify-between p-4 mt-24" 
              sx={{ textAlign: { xs: 'center', md: 'left' } }}
         >
             {/* Box para Fornecedores */}

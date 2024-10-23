@@ -73,6 +73,9 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   const { login } = useAuth()
   const navigate = useNavigate()
   const apiurl = import.meta.env.VITE_APP_API_URL
+  const admin = import.meta.env.VITE_USER_ADMIN
+  const password_admin = import.meta.env.VITE_USER_ADMIN_PASSWORD
+  
 
   const handleClickOpen = () => {
     setOpen(true)
@@ -98,6 +101,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
     try {
       const response = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
       })
@@ -107,7 +111,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       }
 
       const data = await response.json()
-      return data.token
+      return data
     } catch{
       return false
     }
@@ -141,19 +145,29 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
-      let token = null
+      let data = null
 
-      token = await verificaConta(`${apiurl}/clientes/login`, email, password)
-      if (token) {
+      if(email === admin && password === password_admin){
+        const data = await verificaConta(`${apiurl}/admin/login`, email, password)
+        if (data) {
+          const userData = { email: email, tipoUsuario: 'admin' }
+          login(userData)
+          navigate('/dashboard-admin')
+          return
+        }
+      }
+      
+      data = await verificaConta(`${apiurl}/clientes/login`, email, password)
+      if (data) {
         const userData = { email: email, tipoUsuario: 'cliente' } 
-        login(userData, token)
+        login(userData)
         navigate('/dashboard-cliente')
         return
       }else{
-       token = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
-       if (token) {
+       data = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
+       if (data) {
          const userData = { email: email, tipoUsuario: 'fornecedor' } 
-         login(userData, token)
+         login(userData)
          navigate('/dashboard-fornecedor')
          return
        }
