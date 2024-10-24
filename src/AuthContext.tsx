@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { jwtDecode } from 'jwt-decode'
+import axios from 'axios'
 interface User {
   email: string
   tipoUsuario: string
@@ -22,8 +23,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const token = document.cookie.split(' ').find(row => row.startsWith('token='))
     if (token) {
-      const decoded = jwtDecode(token.split('=')[1]) as { email: string, tipoUsuario: string } // Decodifica o token
-      setUser({ email: decoded.email, tipoUsuario: decoded.tipoUsuario }) // Ajuste conforme necessário
+      const decoded = jwtDecode(token.split('=')[1]) as { id: number, email: string, tipoUsuario: string } // Decodifica o token
+      setUser({ email: decoded.email, tipoUsuario: decoded.tipoUsuario })
     }
   }, [])
   // Método de login
@@ -35,10 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = useCallback(async () => {
     try {
       // Chama a rota de logout no servidor
-      await fetch(`${apiurl}/logout`, {
-        method: 'POST',
-        credentials: 'include', // Inclui cookies na requisição
-      })
+      await axios.post(`${apiurl}/logout`, {}, { withCredentials: true })
       setUser(null)
     } catch (error) {
       console.error('Erro ao fazer logout:', error)

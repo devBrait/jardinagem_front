@@ -45,9 +45,9 @@ export default function NovoNomePopular() {
         const updatedNomesCientificos = [...nomesCientificos]
         updatedNomesCientificos[index].nomesPopulares.push({ id: idCounter, nomePopular })
         setNomesCientificos(updatedNomesCientificos)
-        setIdCounter(idCounter + 1) // Incrementa o contador para o próximo ID
-        setNomePopular('') // Limpa o campo de entrada
-        setNomeCientificoId('') // Limpa a seleção do nome científico
+        setIdCounter(idCounter + 1)
+        setNomePopular('')
+        setNomeCientificoId('')
       }
     }
   }

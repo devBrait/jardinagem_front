@@ -1,6 +1,19 @@
-import { Box, Card, CardContent, Typography, Button, FormControlLabel, Checkbox, TextField, Divider } from "@mui/material"
+import { useState } from "react"
+import { Box, Card, CardContent, Typography, Button, FormControlLabel, Checkbox, TextField, Divider, InputAdornment, IconButton } from "@mui/material"
+import { Visibility, VisibilityOff } from "@mui/icons-material"
 
 export default function Configuracoes() {
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev)
+  }
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword((prev) => !prev)
+  }
+
   return (
     <Box p={2}>
       <Typography variant="h4" gutterBottom>
@@ -56,14 +69,32 @@ export default function Configuracoes() {
             variant="outlined"
             fullWidth
             margin="normal"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={handleClickShowPassword} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <TextField
-            placeholder="Digite sua senha nova novamente" 
+            placeholder="Digite sua senha nova novamente"
             variant="outlined"
             fullWidth
             margin="normal"
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={handleClickShowConfirmPassword} edge="end">
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           <Box display="flex" justifyContent="flex-end" style={{ marginTop: '16px' }}>
@@ -84,13 +115,13 @@ export default function Configuracoes() {
             Se você deseja desativar sua conta, clique no botão abaixo.
           </Typography>
           <Divider orientation="horizontal" style={{ margin: '16px 0', width: '100%' }} />
-          
+
           <Box display="flex" justifyContent="flex-end" style={{ marginTop: '16px' }}>
-            <Button 
-              variant="contained" 
-              sx={{ 
-                backgroundColor: '#e95a5a', 
-                color: '#fff', 
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: '#e95a5a',
+                color: '#fff',
                 '&:hover': {
                   backgroundColor: '#d85b5b',
                 }

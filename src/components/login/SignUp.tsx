@@ -23,6 +23,7 @@ import { InputAdornment } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
+import axios from 'axios'
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -121,23 +122,18 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
 
   const cadastraConta = async (url: string, dadosUsuario: Paisagista | Fornecedor) => {
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dadosUsuario),
-      })
+      const response = await axios.post(url, dadosUsuario, { withCredentials: true })
   
-      if (!response.ok) {
-        return false
+      if (response.status !== 200) {
+        return false;
       }
-
-      const data = await response.json()
-      return data 
-    } catch{
+  
+      return response.data
+    } catch {
       return false
     }
   }
+  
   
   const validateInputs = async () => {
     const email = (document.getElementById('email') as HTMLInputElement).value

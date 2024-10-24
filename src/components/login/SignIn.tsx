@@ -23,6 +23,7 @@ import { InputAdornment } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
+import axios from 'axios'
 
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -99,19 +100,13 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
 
   const verificaConta = async (url: string, email: string, senha: string) => {
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
-      })
+      const response = await axios.post(url, { email, senha }, { withCredentials: true });
   
-      if (!response.ok) {
+      if (response.status !== 200){
         return false
       }
 
-      const data = await response.json()
-      return data
+     return response.data
     } catch{
       return false
     }
@@ -150,6 +145,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       if(email === admin && password === password_admin){
         const data = await verificaConta(`${apiurl}/admin/login`, email, password)
         if (data) {
+          toastr.success('Administrador logado com sucesso!')
           const userData = { email: email, tipoUsuario: 'admin' }
           login(userData)
           navigate('/dashboard-admin')
@@ -159,6 +155,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       
       data = await verificaConta(`${apiurl}/clientes/login`, email, password)
       if (data) {
+        toastr.success('Usuário logado com sucesso!')
         const userData = { email: email, tipoUsuario: 'cliente' } 
         login(userData)
         navigate('/dashboard-cliente')
@@ -166,6 +163,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       }else{
        data = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
        if (data) {
+         toastr.success('Usuário logado com sucesso!')
          const userData = { email: email, tipoUsuario: 'fornecedor' } 
          login(userData)
          navigate('/dashboard-fornecedor')

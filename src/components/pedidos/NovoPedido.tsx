@@ -15,7 +15,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 
 interface FormData {
-    nomeEmpresa: string;
+    cep: string;
     enderecoEntrega: string;
     cidade: string;
     estado: string;
@@ -26,7 +26,7 @@ interface FormData {
 
 export default function NovoPedido(){
   const [formData, setFormData] = useState<FormData>({
-    nomeEmpresa: '',
+    cep: '',
     enderecoEntrega: '',
     cidade: '',
     estado: '',
@@ -89,16 +89,15 @@ export default function NovoPedido(){
       <Paper elevation={1} sx={{ padding: '20px', borderRadius: '10px' }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={2}>
-            <FormLabel htmlFor="nomeEmpresa">Nome da Empresa</FormLabel>
+          <FormLabel htmlFor="cep">CEP</FormLabel>
             <TextField
               fullWidth
-              placeholder='Digite o nome da Empresa'
-              name="nomeEmpresa"
-              value={formData.nomeEmpresa}
+              placeholder="Digite seu CEP"
+              name="cep"
+              value={formData.cep}
               onChange={handleChange}
-              variant="outlined" 
+              variant="outlined"
             />
-            
             <FormLabel htmlFor="enderecoEntrega">Endereço de Entrega</FormLabel>
             <TextField
               fullWidth
