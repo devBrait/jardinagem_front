@@ -8,32 +8,36 @@ import Loading from "../loading/Loading"
 import GerenciarUsuarios from "../admin/GerenciarUsuarios"
 import NovoNomePopular from "../admin/NovoNomePopular"
 
-
 export default function Admin(props: { disableCustomTheme?: boolean }) {
 
     const handleNomePopularClick = () => {
         setCurrentComponent(<NovoNomePopular />)
       }
       const [currentComponent, setCurrentComponent] = useState(<GerenciarUsuarios handleNomePopularClick={handleNomePopularClick} />) // ListaPedidos como padrão
-      const { user } = useAuth()
+      const { user, loading } = useAuth()
+      const [loadingComponentState, setLoadingComponentState] = useState(true)
       const navigate = useNavigate()
-      const [loading, setLoading] = useState(true)
     
       useEffect(() => {
+        if (loading) return // Espera até que o loading do contexto termine
+      
         const timer = setTimeout(() => {
-            if (!user) {
-              navigate('/not-found')
-            }else if(user?.tipoUsuario !== 'admin'){
-                navigate('/not-found')
-            }
-          setLoading(false)
+          if (!user) {
+            navigate('/not-found')
+          } else if (user.tipoUsuario !== 'admin') {
+            navigate('/not-found')
+          } else {
+            setLoadingComponentState(false) 
+          }
         }, 500)
+      
         return () => clearTimeout(timer)
-      }, [user, navigate])
-    
-      if (loading) {
+      }, [user, loading, navigate])
+      
+      if (loading || loadingComponentState) {
         return <Loading />
       }
+    
 
 
     return(

@@ -13,23 +13,27 @@ export default function Cliente(props: { disableCustomTheme?: boolean }) {
     setCurrentComponent(<NovoPedido />)
   }
   const [currentComponent, setCurrentComponent] = useState(<ListaPedidos handleNovoPedidoClick={handleNovoPedidoClick} />) // ListaPedidos como padrão
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  const [loadingComponentState, setLoadingComponentState] = useState(true)
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (loading) return // Espera até que o loading do contexto termine
+  
     const timer = setTimeout(() => {
-        if (!user) {
-          navigate('/not-found')
-        }else if(user.tipoUsuario !== 'cliente' && user.tipoUsuario !== 'admin'){
-          navigate('/not-found')
-        }
-      setLoading(false)
+      if (!user) {
+        navigate('/not-found')
+      } else if (user.tipoUsuario !== 'cliente' && user.tipoUsuario !== 'admin') {
+        navigate('/not-found')
+      } else {
+        setLoadingComponentState(false) // Desativa o carregamento específico deste componente
+      }
     }, 500)
+  
     return () => clearTimeout(timer)
-  }, [user, navigate])
-
-  if (loading) {
+  }, [user, loading, navigate])
+  
+  if (loading || loadingComponentState) {
     return <Loading />
   }
 

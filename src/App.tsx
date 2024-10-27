@@ -4,6 +4,7 @@ import CorpoCentral from "./components/header/CorpoCentral"
 import Header from "./components/header/Header"
 import Navbar from "./components/navBar/Navbar"
 import BotoesProcesso from "./components/processo/BotoesProcesso"
+import Vantagens from "./components/vantagens/Vantagens"
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Header/>
           <CorpoCentral/>
           <BotoesProcesso/>
+          <Vantagens/>
           <Footer/>
         </div>
       </div>

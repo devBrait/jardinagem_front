@@ -124,10 +124,10 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     try {
       const response = await axios.post(url, dadosUsuario, { withCredentials: true })
   
-      if (response.status !== 200) {
+      if (response.status !== 201) {
         return false;
       }
-  
+
       return response.data
     } catch {
       return false
