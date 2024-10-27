@@ -103,23 +103,23 @@ export default function CadastroPlantas() {
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <Stack spacing={1} sx={{ flex: 1 }}>
-                <FormLabel htmlFor="nome_cientifico">Nome científico</FormLabel>
-                <TextField
-                  fullWidth
-                  placeholder='Digite o nome científico da planta'
-                  name="nome_cientifico"
-                  value={formData.nome_cientifico}
-                  onChange={handleChange}
-                  variant="outlined"
-                />
-              </Stack>
-              <Stack spacing={1} sx={{ flex: 1 }}>
                 <FormLabel htmlFor="nome_popular">Nome popular</FormLabel>
                 <TextField
                   fullWidth
                   placeholder="Digite o nome popular da planta"
                   name="nome_popular"
                   value={formData.nome_popular}
+                  onChange={handleChange}
+                  variant="outlined"
+                />
+              </Stack>
+              <Stack spacing={1} sx={{ flex: 1 }}>
+                <FormLabel htmlFor="nome_cientifico">Nome científico</FormLabel>
+                <TextField
+                  fullWidth
+                  placeholder='Digite o nome científico da planta'
+                  name="nome_cientifico"
+                  value={formData.nome_cientifico}
                   onChange={handleChange}
                   variant="outlined"
                 />

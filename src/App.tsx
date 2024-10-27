@@ -4,6 +4,7 @@ import CorpoCentral from "./components/header/CorpoCentral"
 import Header from "./components/header/Header"
 import Navbar from "./components/navBar/Navbar"
 import BotoesProcesso from "./components/processo/BotoesProcesso"
+import Vantagens from "./components/vantagens/Vantagens"
 
 export default function App() {
   return (
@@ -11,12 +12,13 @@ export default function App() {
     <CssBaseline>
       <div>
         <div className="m-0 flex flex-col min-h-screen">
-          <div className="flex align-items-center py-4 justify-content-between p-2">
-            <Navbar/>
-          </div>
+        <div className="flex align-items-center py-4 justify-content-between">
+          <Navbar />
+        </div>
           <Header/>
           <CorpoCentral/>
           <BotoesProcesso/>
+          <Vantagens/>
           <Footer/>
         </div>
       </div>

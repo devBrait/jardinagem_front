@@ -3,8 +3,10 @@ import { UmEntreposto } from '../login/CustomIcons'
 import LogoutIcon from '@mui/icons-material/Logout'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'
+import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import MenuIcon from '@mui/icons-material/Menu'
 import { useState } from 'react'
 import HomeIcon from '@mui/icons-material/Home'
@@ -19,6 +21,8 @@ import YardIcon from '@mui/icons-material/Yard'
 import InventoryIcon from '@mui/icons-material/Inventory'
 import ContaCliente from '../conta/ContaCliente'
 import ContaFornecedor from '../conta/ContaFornecedor'
+import GerenciarUsuarios from '../admin/GerenciarUsuarios'
+import NovoNomePopular from '../admin/NovoNomePopular'
 
 interface MenuItem {
     text: string
@@ -40,21 +44,36 @@ export default function SideNavbar({ setCurrentComponent }: { setCurrentComponen
     setActiveItem('cadastroPlantas')
   }
 
+  const handleNomePopularClick = () => {
+    setCurrentComponent(<NovoNomePopular />)
+    setActiveItem('novoNomePopular')
+  }
+
   const menuItems: MenuItem[] = user?.tipoUsuario === 'cliente' ? [
-    { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home'},
+    { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home' },
     { text: 'Meus Pedidos', icon: <ShoppingCartIcon sx={{ marginRight: 3 }} />, value: 'meusPedidos', component: <ListaPedidos handleNovoPedidoClick={handleNovoPedidoClick} /> },
     { text: 'Faça seu Pedido', icon: <AddShoppingCartIcon sx={{ marginRight: 3 }} />, value: 'facaSeuPedido', component: <NovoPedido /> },
     { text: 'Conta', icon: <AccountCircleIcon sx={{ marginRight: 3 }} />, value: 'conta', component: <ContaCliente /> },
     { text: 'Configurações', icon: <SettingsIcon sx={{ marginRight: 3 }} />, value: 'configuracoes', component: <Configuracoes /> },
-  ] : [
-    { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home'},
-    { text: 'Solicitações', icon: <InventoryIcon sx={{ marginRight: 3 }} />, value: 'solicitacoes', component: <ListaSolicitacoes handleCadastroPlantaClick={handleCadastroPlantaClick}/> },
+] : user?.tipoUsuario === 'fornecedor' ? [
+    { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home' },
+    { text: 'Solicitações', icon: <InventoryIcon sx={{ marginRight: 3 }} />, value: 'solicitacoes', component: <ListaSolicitacoes handleCadastroPlantaClick={handleCadastroPlantaClick} /> },
     { text: 'Cadastro de Plantas', icon: <YardIcon sx={{ marginRight: 3 }} />, value: 'cadastroPlantas', component: <CadastroPlantas /> },
     { text: 'Conta', icon: <AccountCircleIcon sx={{ marginRight: 3 }} />, value: 'conta', component: <ContaFornecedor /> },
     { text: 'Configurações', icon: <SettingsIcon sx={{ marginRight: 3 }} />, value: 'configuracoes', component: <Configuracoes /> },
-  ]
+] : user?.tipoUsuario === 'admin' ? [
+    { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home' },
+    { text: 'Gerenciar Usuários', icon: <PeopleIcon sx={{ marginRight: 3 }} />, value: 'gerenciarUsuarios', component: <GerenciarUsuarios handleNomePopularClick={handleNomePopularClick} /> },
+    { text: 'Novo nome popular', icon: <LibraryAddIcon sx={{ marginRight: 3 }} />, value: 'novoNomePopular', component: <NovoNomePopular /> },
+] : []
+
   
-  const [activeItem, setActiveItem] = useState(user?.tipoUsuario === 'cliente' ? 'meusPedidos' : 'solicitacoes')
+  const [activeItem, setActiveItem] = useState(
+    user?.tipoUsuario === 'cliente' ? 'meusPedidos' :
+    user?.tipoUsuario === 'fornecedor' ? 'solicitacoes' :
+    user?.tipoUsuario === 'admin' ? 'gerenciarUsuarios' : 
+    'gerenciarUsuarios'
+  )
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAuth()

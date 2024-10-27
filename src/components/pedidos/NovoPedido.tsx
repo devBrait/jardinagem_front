@@ -15,26 +15,31 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 
 interface FormData {
-    nomeEmpresa: string;
-    enderecoEntrega: string;
-    cidade: string;
-    estado: string;
-    observacoes: string;
-    arquivo: File | null; 
-    itens: { nome: string; quantidade: string }[];
-  }
+  cep: string;
+  enderecoEntrega: string;
+  numero: string; 
+  cidade: string;
+  estado: string;
+  observacoes: string;
+  arquivo: File | null; 
+  itens: { nome: string; quantidade: string }[];
+}
+
 
 export default function NovoPedido(){
   const [formData, setFormData] = useState<FormData>({
-    nomeEmpresa: '',
+    cep: '',
     enderecoEntrega: '',
+    numero: '',
     cidade: '',
     estado: '',
     observacoes: '',
     arquivo: null,
     itens: [{ nome: '', quantidade: '' }],
   })
+  
   const [isAddingItems, setIsAddingItems] = useState(true) // True: adicionando itens, False: upload de arquivo
+  const isMobile = window.innerWidth < 600; // Verifica se a tela é pequena
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -82,53 +87,66 @@ export default function NovoPedido(){
   }
 
   return (
-    <Stack spacing={4} sx={{ maxWidth: "100%", maxHeight: "700px", mx: 'auto', mt: "15px", mg: 10 }}>
+    <Stack spacing={4} sx={{ maxWidth: "100%", maxHeight: "900px", mx: 'auto', mt: "15px", mg: 10 }}>
       <Typography variant="h4" align="left">
         Novo Pedido
       </Typography>
       <Paper elevation={1} sx={{ padding: '20px', borderRadius: '10px' }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={2}>
-            <FormLabel htmlFor="nomeEmpresa">Nome da Empresa</FormLabel>
+            <FormLabel htmlFor="cep">CEP</FormLabel>
             <TextField
               fullWidth
-              placeholder='Digite o nome da Empresa'
-              name="nomeEmpresa"
-              value={formData.nomeEmpresa}
-              onChange={handleChange}
-              variant="outlined" 
-            />
-            
-            <FormLabel htmlFor="enderecoEntrega">Endereço de Entrega</FormLabel>
-            <TextField
-              fullWidth
-              placeholder="Digite o endereço de entrega"
-              name="enderecoEntrega"
-              value={formData.enderecoEntrega}
+              placeholder="Digite seu CEP"
+              name="cep"
+              value={formData.cep}
               onChange={handleChange}
               variant="outlined"
             />
-            
+            <FormLabel htmlFor="enderecoEntrega">Endereço de Entrega</FormLabel>
             <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
-            <FormControl sx={{ flexGrow: 1 }}>
-              <FormLabel>Cidade</FormLabel>
               <TextField
-                id="cidade"
-                placeholder="Digite a cidade"
                 fullWidth
+                placeholder="Digite o endereço de entrega"
+                name="enderecoEntrega"
+                value={formData.enderecoEntrega}
+                onChange={handleChange}
                 variant="outlined"
               />
-            </FormControl>
-            <FormControl sx={{ flexGrow: 1 }}>
-              <FormLabel>Estado</FormLabel>
               <TextField
-                id="estado"
-                placeholder="Digite o estado"
-                fullWidth
+                placeholder="Número"
+                name="numero"
+                value={formData.numero}
+                onChange={handleChange}
                 variant="outlined"
               />
-            </FormControl>
-          </Stack>
+            </Stack>
+            <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+              <FormControl sx={{ flexGrow: 1 }}>
+                <FormLabel>Cidade</FormLabel>
+                <TextField
+                  id="cidade"
+                  placeholder="Digite a cidade"
+                  fullWidth
+                  variant="outlined"
+                  name="cidade"
+                  value={formData.cidade}
+                  onChange={handleChange}
+                />
+              </FormControl>
+              <FormControl sx={{ flexGrow: 1 }}>
+                <FormLabel>Estado</FormLabel>
+                <TextField
+                  id="estado"
+                  placeholder="Digite o estado"
+                  fullWidth
+                  variant="outlined"
+                  name="estado"
+                  value={formData.estado}
+                  onChange={handleChange}
+                />
+              </FormControl>
+            </Stack>
 
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="h6">Adicionar itens ou arquivo</Typography>
@@ -181,6 +199,9 @@ export default function NovoPedido(){
                 onChange={handleFileChange}
                 InputLabelProps={{ shrink: true }}
                 InputProps={{
+                  inputProps: {
+                    capture: isMobile ? "environment" : undefined,
+                  },
                   endAdornment: (
                     <InputAdornment position="end">
                       <FileUploadIcon />

@@ -2,7 +2,11 @@ import { Box, Typography, Divider, Stack } from '@mui/material';
 
 export default function BotoesProcesso() {
     return (
-        <Box className="flex flex-col mx-auto mt-24 mb-24 items-center px-16 md:ml-16">
+        <Box id="comoFunciona" className="flex flex-col mx-auto mt-24 mb-24 items-center px-16 md:ml-16">
+            <Typography variant="h4" className="mb-20 text-verde_claro font-bold">
+                Solicitar e vender suas plantas é muito fácil.
+            </Typography>
+            
             <Stack 
                 direction={{ xs: "column", md: "row" }}
                 spacing={4} 

@@ -23,6 +23,7 @@ import { InputAdornment } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
+import axios from 'axios'
 
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -73,6 +74,9 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   const { login } = useAuth()
   const navigate = useNavigate()
   const apiurl = import.meta.env.VITE_APP_API_URL
+  const admin = import.meta.env.VITE_USER_ADMIN
+  const password_admin = import.meta.env.VITE_USER_ADMIN_PASSWORD
+  
 
   const handleClickOpen = () => {
     setOpen(true)
@@ -96,18 +100,13 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
 
   const verificaConta = async (url: string, email: string, senha: string) => {
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
-      })
+      const response = await axios.post(url, { email, senha }, { withCredentials: true });
   
-      if (!response.ok) {
+      if (response.status !== 200){
         return false
       }
-  
-      const data = await response.json()
-      return data.success
+
+     return response.data
     } catch{
       return false
     }
@@ -118,7 +117,6 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
     const password = (document.getElementById('password') as HTMLInputElement).value
   
     let isValid = true
-
   
     // Validação de e-mail
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
@@ -142,29 +140,37 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   
     // Se os inputs forem válidos, verificar conta
     if (isValid) {
-      if(email === 'admin@admin.com' && password === 'admin123') {
-        const userData = { email: email, senha: password, tipoUsuario: 'admin' }
-        login(userData)
-        navigate('/dashboard-fornecedor')
-        return
-      }
+      let data = null
 
-      const isCliente = await verificaConta(`${apiurl}/clientes/login`, email, password)
-      if (isCliente) {
-        const userData = { email: email, senha: password, tipoUsuario: 'cliente' } 
+      if(email === admin && password === password_admin){
+        const data = await verificaConta(`${apiurl}/admin/login`, email, password)
+        if (data) {
+          toastr.success('Administrador logado com sucesso!')
+          const userData = { email: email, tipoUsuario: 'admin' }
+          login(userData)
+          navigate('/dashboard-admin')
+          return
+        }
+      }
+      
+      data = await verificaConta(`${apiurl}/clientes/login`, email, password)
+      if (data) {
+        toastr.success('Usuário logado com sucesso!')
+        const userData = { email: email, tipoUsuario: 'cliente' } 
         login(userData)
         navigate('/dashboard-cliente')
         return
+      }else{
+       data = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
+       if (data) {
+         toastr.success('Usuário logado com sucesso!')
+         const userData = { email: email, tipoUsuario: 'fornecedor' } 
+         login(userData)
+         navigate('/dashboard-fornecedor')
+         return
+       }
       }
-  
-      const isFornecedor = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
-      if (isFornecedor) {
-        const userData = { email: email, senha: password, tipoUsuario: 'fornecedor' } 
-        login(userData)
-        navigate('/dashboard-fornecedor')
-        return
-      }
-  
+
       // Se nenhuma conta foi encontrada, definir a mensagem de erro
       setEmailError(true)
       setPasswordError(true)

@@ -15,25 +15,29 @@ export default function Fornecedor(props: { disableCustomTheme?: boolean }) {
     }
 
     const [currentComponent, setCurrentComponent] = useState(<ListaSolicitacoes handleCadastroPlantaClick={handleCadastroPlantaClick}/>)
-    const { user } = useAuth()
+    const { user, loading } = useAuth()
+    const [loadingComponentState, setLoadingComponentState] = useState(true)
     const navigate = useNavigate()
-    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        if (loading) return // Espera até que o loading do contexto termine
+      
         const timer = setTimeout(() => {
-            if (!user) {
+          if (!user) {
             navigate('/not-found')
-            }else if(user.tipoUsuario !== 'fornecedor' && user.tipoUsuario !== 'admin'){
+          } else if (user.tipoUsuario !== 'fornecedor' && user.tipoUsuario !== 'admin') {
             navigate('/not-found')
-            }
-        setLoading(false)
+          } else {
+            setLoadingComponentState(false) // Desativa o carregamento específico deste componente
+          }
         }, 500)
+      
         return () => clearTimeout(timer)
-    }, [user, navigate])
-
-    if (loading) {
+      }, [user, loading, navigate])
+      
+      if (loading || loadingComponentState) {
         return <Loading />
-    }
+      }
 
     return (
         <AppTheme {...props}>

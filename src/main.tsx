@@ -11,6 +11,7 @@ import Cliente from './components/dashboard/Cliente.tsx'
 import Fornecedor from './components/dashboard/Fornecedor.tsx'
 import { AuthProvider } from './AuthContext.tsx'
 import Erro from './components/error/Erro.tsx'
+import Admin from './components/dashboard/Admin.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <AuthProvider>
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/cadastro" element={<SignUp />} />
             <Route path="/dashboard-cliente" element={<Cliente />} />
             <Route path="/dashboard-fornecedor" element={<Fornecedor />} />
+            <Route path="/dashboard-admin" element={<Admin />} />
             <Route path="*" element={<Erro />} /> {/* Captura todas as rotas não reconhecidas */}
           </Routes>
         </Router>

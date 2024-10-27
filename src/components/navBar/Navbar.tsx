@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   AppBar,
   Box,
@@ -24,6 +24,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const navigate = useNavigate()
+  const [scrollPosition, setScrollPosition] = useState(0)
   const { user, logout } = useAuth()
 
   // Funções para redirecionamento de login e cadastro
@@ -46,10 +47,33 @@ export default function Navbar() {
   }
 
   const handlePerfil = () => {
-    if(user?.tipoUsuario == 'cliente'){
+    if(user?.tipoUsuario == 'admin'){
+      navigate("/dashboard-admin")
+    }
+    else if(user?.tipoUsuario == 'cliente'){
       navigate("/dashboard-cliente")
-    }else if(user?.tipoUsuario == 'fornecedor' || user?.tipoUsuario == 'admin'){
+    }
+    else if(user?.tipoUsuario == 'fornecedor'){
       navigate("/dashboard-fornecedor")
+    }
+  }
+
+  const scrollSecao = (id: string) => {
+    const section = document.getElementById(id)
+    let headerOffset = 0
+    if (section) {
+      if(id == 'vantagens'){
+        headerOffset = 100
+      }else{
+        headerOffset = 300
+      }
+      const elementPosition = section.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.scrollY - headerOffset
+  
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      })
     }
   }
  
@@ -62,9 +86,30 @@ export default function Navbar() {
     setDrawerOpen(open)
   }
 
+    // Adiciona o evento de scroll para ajustar a opacidade do AppBar
+    useEffect(() => {
+      const handleScroll = () => {
+        const position = window.scrollY
+        setScrollPosition(position)
+      }
+  
+      window.addEventListener("scroll", handleScroll)
+      return () => {
+        window.removeEventListener("scroll", handleScroll)
+      }
+    }, [])
+
+    
+    const appBarOpacity = scrollPosition > 50 ? 0.8 : 1
+
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: "#fff", boxShadow: "none" }}>
+      <AppBar position="fixed" sx={{
+          backgroundColor: `rgba(255, 255, 255, ${appBarOpacity})`,
+          boxShadow: "none",
+          transition: "background-color 0.3s ease-in-out",
+          paddingTop: '16px',
+        }}>
         <Toolbar className="px-[50px] flex justify-between">
           {/* Ícone do menu */}
           <IconButton
@@ -124,16 +169,38 @@ export default function Navbar() {
             flexGrow={12}
             mx={5}
           >
-            <Link href="/" underline="none" sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease"}}>
+            <Link href="/" underline="none" 
+                sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease"}}
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+            >
               <Typography variant="body1" className="text-lg">Home</Typography>
             </Link>
             <Typography mx={1} color="#656565">
             |
           </Typography>
-            <Link href="/" underline="none" sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease" }}>
-              <Typography variant="body1" className="text-lg">Como Funciona</Typography>
-            </Link>
-            <Typography mx={1} color="#656565">
+          <Typography
+            variant="body1"
+            className="text-lg"
+            sx={{
+              mx: 2,
+              color: "#656565",
+              cursor: "pointer",
+              "&:hover": { color: "#000" },
+              transition: "color 0.3s ease"
+            }}
+            onClick={(e) => {
+              e.preventDefault()
+              scrollSecao("comoFunciona")
+              
+              }
+            }
+          >
+            Como Funciona
+          </Typography>
+          <Typography mx={1} color="#656565">
             |
           </Typography>
             <Link href="/" underline="none" sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease" }}>
@@ -142,7 +209,15 @@ export default function Navbar() {
             <Typography mx={1} color="#656565">
             |
           </Typography>
-          <Link href="/" underline="none" sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease" }}>
+          <Link href="/" underline="none" 
+            sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease" }}
+            onClick={(e) => {
+              e.preventDefault()
+              scrollSecao("vantagens")
+              
+              }
+            }
+          >
               <Typography variant="body1" className="text-lg">Vantagens</Typography>
             </Link>
           </Box>
@@ -193,8 +268,8 @@ export default function Navbar() {
           <Divider orientation="horizontal" sx={{color: "#656565", marginTop: "10px"}}/>
       </AppBar>
 
-        {/* Menu Lateral */}
-        <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+       {/* Menu Lateral */}
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
         <Box
           sx={{ height: '100%', backgroundColor: "#ffff" }}
           role="presentation"
@@ -202,57 +277,85 @@ export default function Navbar() {
           onKeyDown={toggleDrawer(false)}
         >
           <List className="text-verde_claro cursor-pointer">
-            {['Home', 'Como Funciona', 'Blog', 'Vantagens'].map((text) => (
-              <ListItem key={text}>
-                <ListItemText primary={text} />
-              </ListItem>
-            ))}
-            {user ? (
-              null
-          ) : (
-            <>
-              <ListItem>
-                <Button
-                  onClick={handleLoginClick}
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#ffff',
-                    color: "#98b344",
-                    width: '100%',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: '#6b8a2a',
-                      transition: 'background-color 0.3s ease',
-                    },
-                  }}
-                >
-                  Login
-                </Button>
-              </ListItem>
-              <ListItem>
-                <Button
-                  onClick={handleCadastroClick}
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#7a9a2a',
-                    color: 'white',
-                    width: '100%',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: '#6b8a2a',
-                      transition: 'background-color 0.3s ease',
-                    },
-                  }}
-                >
-                  Cadastro
-                </Button>
-              </ListItem>
-            </>
-          )}
-        </List>
-      </Box>
-    </Drawer>
-
+            <ListItem 
+              onClick={(e) => {
+                e.preventDefault()
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                toggleDrawer(false)() 
+              }}
+            >
+              <ListItemText primary="Home" />
+            </ListItem>
+            <ListItem 
+              onClick={(e) => {
+                e.preventDefault()
+                scrollSecao("comoFunciona")
+                toggleDrawer(false)() 
+              }}
+            >
+              <ListItemText primary="Como Funciona" />
+            </ListItem>
+            <ListItem 
+              onClick={(e) => {
+                e.preventDefault()
+                navigate("/") 
+                toggleDrawer(false)() 
+              }}
+            >
+              <ListItemText primary="Blog" />
+            </ListItem>
+            <ListItem 
+              onClick={(e) => {
+                e.preventDefault()
+                scrollSecao("vantagens")
+                toggleDrawer(false)() 
+              }}
+            >
+              <ListItemText primary="Vantagens" />
+            </ListItem>
+            {user ? null : (
+              <>
+                <ListItem>
+                  <Button
+                    onClick={handleLoginClick}
+                    variant="contained"
+                    sx={{
+                      backgroundColor: '#ffff',
+                      color: "#98b344",
+                      width: '100%',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: '#6b8a2a',
+                        transition: 'background-color 0.3s ease',
+                      },
+                    }}
+                  >
+                    Login
+                  </Button>
+                </ListItem>
+                <ListItem>
+                  <Button
+                    onClick={handleCadastroClick}
+                    variant="contained"
+                    sx={{
+                      backgroundColor: '#7a9a2a',
+                      color: 'white',
+                      width: '100%',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: '#6b8a2a',
+                        transition: 'background-color 0.3s ease',
+                      },
+                    }}
+                  >
+                    Cadastro
+                  </Button>
+                </ListItem>
+              </>
+            )}
+          </List>
+        </Box>
+      </Drawer>
     </>
   )
 }

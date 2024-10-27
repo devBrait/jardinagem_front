@@ -29,7 +29,15 @@ export default function Footer() {
           CNPJ: 46.640.604/0001-01
         </Typography>
         <Typography sx={{ color: '#656565', marginTop: 1, textAlign: isMobile ? 'center' : 'left' }}>
-          Confere lá: @umentreposto
+          Confere lá: 
+          <Link 
+            href="https://www.instagram.com/umentreposto" 
+            target="_blank" 
+            rel="noopener" 
+            sx={{ color: '#656565', textDecoration: 'none', marginLeft: 0.5 }}
+          >
+            @umentreposto
+          </Link>
         </Typography>
       </Box>
 
