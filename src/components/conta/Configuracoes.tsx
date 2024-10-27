@@ -1,10 +1,17 @@
 import { useState } from "react"
 import { Box, Card, CardContent, Typography, Button, FormControlLabel, Checkbox, TextField, Divider, InputAdornment, IconButton } from "@mui/material"
 import { Visibility, VisibilityOff } from "@mui/icons-material"
+import toastr from "toastr"
+import { useAuth } from "../../AuthContext"
+import axios from "axios"
 
 export default function Configuracoes() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const { user } = useAuth()
+  const apiurl = import.meta.env.VITE_APP_API_URL
 
   const handleClickShowPassword = () => {
     setShowPassword((prev) => !prev)
@@ -13,6 +20,43 @@ export default function Configuracoes() {
   const handleClickShowConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev)
   }
+
+  const handleUpdatePassword = async () => { 
+    if (newPassword === confirmPassword && newPassword.length >= 6) {
+      const url = user?.tipoUsuario === 'cliente' 
+        ? `${apiurl}/clientes/redefinir-senha` 
+        : `${apiurl}/fornecedores/redefinir-senha`
+  
+      if (user?.email) {
+        const success = await redefineSenha(url, user.email, newPassword)
+  
+        if (success) {
+          toastr.success('Senha atualizada com sucesso!')
+        } else {
+          toastr.error("Não foi possível atualizar a senha. Tente novamente mais tarde.")
+        }
+      } else {
+        toastr.error('Email do usuário não disponível.')
+      }
+    } else {
+      toastr.error('As senhas devem ser iguais e ter pelo menos 6 caracteres.')
+    }
+  }
+  
+  const redefineSenha = async (url: string, email: string, senha: string) => {
+    try {
+      const response = await axios.put(url, { email, senha }, { headers: { 'Content-Type': 'application/json' } })
+  
+      if (response.status !== 200 && response.status !== 204) {
+        return false
+      }
+  
+      return true
+    } catch (error) {
+      console.error("Erro na requisição:", error)
+      return false
+    }
+  }  
 
   return (
     <Box p={2}>
@@ -70,6 +114,8 @@ export default function Configuracoes() {
             fullWidth
             margin="normal"
             type={showPassword ? 'text' : 'password'}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -86,6 +132,8 @@ export default function Configuracoes() {
             fullWidth
             margin="normal"
             type={showConfirmPassword ? 'text' : 'password'}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -98,7 +146,7 @@ export default function Configuracoes() {
           />
 
           <Box display="flex" justifyContent="flex-end" style={{ marginTop: '16px' }}>
-            <Button variant="contained" color="primary">
+            <Button variant="contained" color="primary" onClick={handleUpdatePassword}>
               Atualizar
             </Button>
           </Box>

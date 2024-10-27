@@ -89,6 +89,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     nome: string
     telefone: number
     CPF: number
+    CEP: string
   }
 
   interface Fornecedor {
@@ -140,17 +141,16 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
     const password = (document.getElementById('password') as HTMLInputElement).value
     let CPF = ''
     let CNPJ = ''
-    let CEP = ''
     let EMPRESA = ''
 
     const nome = (document.getElementById(`nome-${userType}`) as HTMLInputElement).value
     const celular = (document.getElementById(`celular-${userType}`) as HTMLInputElement).value
+    const CEP = (document.getElementById(`cep-${userType}`) as HTMLInputElement).value
 
     if(userType === 'paisagista') {
         CPF = (document.getElementById(`cpf-${userType}`) as HTMLInputElement).value
     }else{
         CNPJ = (document.getElementById(`cnpj-${userType}`) as HTMLInputElement).value
-        CEP = (document.getElementById(`cep`) as HTMLInputElement).value
         EMPRESA = (document.getElementById(`empresa`) as HTMLInputElement).value
     }
   
@@ -182,6 +182,15 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
       setcelularError(false)
       setcelularErrorMessage('')
     }
+
+    if(!CEP || !/^\d{5}-\d{3}$/.test(CEP)){
+      setcepError(true)
+      setcepErrorMessage('Por favor, insira um CEP válido (formato: XXXXX-XXX).')
+      isValid = false
+     } else {
+         setcepError(false)  
+         setcepErrorMessage('')
+     }
   
     // Validação de senha
     if (!password || password.length < 6) {
@@ -212,15 +221,6 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         setcnpjErrorMessage('')
       }
 
-      if(!CEP || !/^\d{5}-\d{3}$/.test(CEP)){
-       setcepError(true)
-       setcepErrorMessage('Por favor, insira um CEP válido (formato: XXXXX-XXX).')
-       isValid = false
-      } else {
-          setcepError(false)  
-          setcepErrorMessage('')
-      }
-
       if(!EMPRESA){
         setempresaError(true)
         setempresaErrorMessage('Por favor, insira o nome da sua empresa.')
@@ -249,6 +249,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
           nome: nome,
           telefone: parseInt(celular.replace(/\D/g, ''), 10),
           CPF: parseInt(CPF.replace(/\D/g, ''), 10),
+          CEP: CEP,
         }
         
         data = await cadastraConta(url, dadosUsuario)
@@ -428,7 +429,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
                 }}
               />
             </FormControl>
-             {/* Campos adicionais para Paisagista */}
+        {/* Campos adicionais para Paisagista */}
         {userType === 'paisagista' && (
           <>
             <FormControl>
@@ -469,78 +470,90 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
                 color={celularError ? 'error' : 'primary'}
               />
             </FormControl>
+            <FormControl>
+              <FormLabel>CEP</FormLabel>
+              <TextField
+                error={cepError}
+                helperText={cepErrorMessage}
+                id="cep-paisagista"
+                placeholder="Digite seu CEP"
+                fullWidth
+                variant="outlined"
+                color={cepError ? 'error' : 'primary'}
+              />
+            </FormControl>
           </>
         )}
 
         {/* Campos adicionais para Fornecedor */}
-  {userType === 'fornecedor' && (
-  <>
-    <FormControl>
-      <FormLabel>CNPJ</FormLabel>
-      <TextField
-        error={cnpjError}
-        helperText={cnpjErrorMessage}
-        id="cnpj-fornecedor"
-        placeholder="Digite o CNPJ"
-        fullWidth
-        variant="outlined"
-        color={cnpjError ? 'error' : 'primary'}
-        value={cnpj}
-        onChange={handleCnpjChange}
-      />
-    </FormControl>
-    <FormControl>
-      <FormLabel>Nome</FormLabel>
-      <TextField
-        error={nomeError}
-        helperText={nomeErrorMessage}
-        id="nome-fornecedor"
-        placeholder="Digite seu nome"
-        fullWidth
-        variant="outlined"
-        color={nomeError ? 'error' : 'primary'}
-      />
-    </FormControl>
-    <FormControl>
-      <FormLabel>Celular</FormLabel>
-      <TextField
-        error={celularError}
-        helperText={celularErrorMessage}
-        id="celular-fornecedor"
-        placeholder="Digite seu número de celular"
-        fullWidth
-        variant="outlined"
-        color={celularError ? 'error' : 'primary'}
-      />
-    </FormControl>
-    <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
-      <FormControl sx={{ flexGrow: 1 }}>
-        <FormLabel>CEP</FormLabel>
-        <TextField
-          error={cepError}
-          helperText={cepErrorMessage}
-          id="cep"
-          placeholder="Digite o CEP"
-          fullWidth
-          variant="outlined"
-          color={cepError ? 'error' : 'primary'}
-        />
-      </FormControl>
-      <FormControl sx={{ flexGrow: 1 }}>
-        <FormLabel>Empresa</FormLabel>
-        <TextField
-          error={empresaError}
-          helperText={empresaErrorMessage}
-          id="empresa"
-          placeholder="Nome da empresa"
-          fullWidth
-          variant="outlined"
-          color={empresaError ? 'error' : 'primary'}
-        />
-      </FormControl>
-    </Stack>
-  </>
-)}
+        {userType === 'fornecedor' && (
+        <>
+          <FormControl>
+            <FormLabel>CNPJ</FormLabel>
+            <TextField
+              error={cnpjError}
+              helperText={cnpjErrorMessage}
+              id="cnpj-fornecedor"
+              placeholder="Digite o CNPJ"
+              fullWidth
+              variant="outlined"
+              color={cnpjError ? 'error' : 'primary'}
+              value={cnpj}
+              onChange={handleCnpjChange}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Nome</FormLabel>
+            <TextField
+              error={nomeError}
+              helperText={nomeErrorMessage}
+              id="nome-fornecedor"
+              placeholder="Digite seu nome"
+              fullWidth
+              variant="outlined"
+              color={nomeError ? 'error' : 'primary'}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Celular</FormLabel>
+            <TextField
+              error={celularError}
+              helperText={celularErrorMessage}
+              id="celular-fornecedor"
+              placeholder="Digite seu número de celular"
+              fullWidth
+              variant="outlined"
+              color={celularError ? 'error' : 'primary'}
+            />
+          </FormControl>
+          <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+            <FormControl sx={{ flexGrow: 1 }}>
+              <FormLabel>CEP</FormLabel>
+              <TextField
+                error={cepError}
+                helperText={cepErrorMessage}
+                id="cep-fornecedor"
+                placeholder="Digite o CEP"
+                fullWidth
+                variant="outlined"
+                color={cepError ? 'error' : 'primary'}
+              />
+            </FormControl>
+            <FormControl sx={{ flexGrow: 1 }}>
+              <FormLabel>Empresa</FormLabel>
+              <TextField
+                error={empresaError}
+                helperText={empresaErrorMessage}
+                id="empresa"
+                placeholder="Nome da empresa"
+                fullWidth
+                variant="outlined"
+                color={empresaError ? 'error' : 'primary'}
+              />
+            </FormControl>
+          </Stack>
+        </>
+        )}
             <Button
               type="submit"
               fullWidth
