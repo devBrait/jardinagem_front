@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   TextField,
   Button,
@@ -9,24 +9,66 @@ import {
   InputAdornment,
   FormLabel,
   FormControl,
+  Container,
+  CssBaseline,
+  Box,
 } from '@mui/material'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
+import { useAuth } from '../../AuthContext'
+import Loading from '../loading/Loading'
+import { useNavigate, useLocation } from 'react-router-dom'
+import HomeIcon from '@mui/icons-material/Home'
+import AppTheme from '../../css/theme/AppTheme'
+import axios from 'axios'
+import toastr from 'toastr'
+import WarningIcon from '@mui/icons-material/Warning'
 
 interface FormData {
-  cep: string;
-  enderecoEntrega: string;
-  numero: string; 
-  cidade: string;
-  estado: string;
-  observacoes: string;
-  arquivo: File | null; 
-  itens: { nome: string; quantidade: string }[];
+  cep: string
+  enderecoEntrega: string
+  numero: string
+  cidade: string
+  estado: string
+  observacoes: string
+  arquivo: File | null
+  itens: { nome: string; quantidade: string }[]
 }
 
+export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
+  const [isAddingItems, setIsAddingItems] = useState(true)
+  const isMobile = window.innerWidth < 600
+  const { user, loading, update } = useAuth()
+  const [loadingComponentState, setLoadingComponentState] = useState(true)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const acessoPelaRota = location.pathname === '/realiza-pedido'
+  const apiurl = import.meta.env.VITE_APP_API_URL
 
-export default function NovoPedido(){
+  const handleAtivarContaAsync = async () => {
+    const url = user?.tipoUsuario === 'cliente' 
+      ? `${apiurl}/clientes/alterna-estado` 
+      : `${apiurl}/fornecedores/alterna-estado`
+
+    try {
+      const response = await axios.put(url, {email: user?.email}, {withCredentials: true})
+      
+      if (response.status === 200 || response.status === 204) {
+          toastr.success('Conta ativada com sucesso!')
+
+        if (user) {
+          update({ ...user, ativo: !user.ativo })
+        }
+
+      } else {
+        toastr.error('Não foi possível desativar a conta. Tente novamente mais tarde.')
+      }
+    } catch {
+      toastr.error('Ocorreu um erro ao tentar desativar a conta.')
+    }
+  }
+
   const [formData, setFormData] = useState<FormData>({
     cep: '',
     enderecoEntrega: '',
@@ -37,14 +79,127 @@ export default function NovoPedido(){
     arquivo: null,
     itens: [{ nome: '', quantidade: '' }],
   })
+
+  useEffect(() => {
+    const email = user?.email
+
+    const fetchClienteData = async () => {
+      try {
+        const response = await axios.get(`${apiurl}/clientes/${email}`, {
+          withCredentials: true,
+        })
+
+        if (response.data.success) {
+          const dadosCliente = {
+            nome: response.data.cliente.nome,
+            cpf: response.data.cliente.cpf,
+            email: response.data.cliente.email,
+            telefone: response.data.cliente.telefone,
+            cep: response.data.cliente.CEP,
+          };
+
+          // Atualiza o estado do formData com o CEP carregado inicialmente
+          setFormData((prevData) => ({
+            ...prevData,
+            cep: dadosCliente.cep,
+          }))
+          // Chamada para buscar o endereço usando o CEP
+          await fetchEnderecoData(dadosCliente.cep)
+        } else {
+          throw new Error('Dados do cliente não encontrados')
+        }
+      } catch (error) {
+        console.error('Erro ao carregar os dados do cliente:', error)
+      }
+    };
+
+    fetchClienteData()
+  }, [user?.email, apiurl])
+
+  useEffect(() => {
+    if (formData.cep) {
+      fetchEnderecoData(formData.cep)
+    }
+  }, [formData.cep])
+
+  const fetchEnderecoData = async (cep: string) => {
+    try {
+      const enderecoResponse = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+
+      // Verifica se a resposta contém erro
+      if (enderecoResponse.data.erro) {
+        setFormData((prevData) => ({
+          ...prevData,
+          enderecoEntrega: '',
+          cidade: '',
+          estado: '',
+        }))
+        toastr.error('CEP inválido')
+        return
+      }
+
+      // Extrai os dados do endereço
+      const enderecoDados = {
+        rua: enderecoResponse.data.logradouro || '',
+        bairro: enderecoResponse.data.bairro || '',
+        cidade: enderecoResponse.data.localidade || '',
+        estado: enderecoResponse.data.uf || '',
+      }
+
+      // Atualiza o estado com os dados do endereço
+      setFormData((prevData) => ({
+        ...prevData,
+        enderecoEntrega: `${enderecoDados.rua}, ${enderecoDados.bairro}`,
+        cidade: enderecoDados.cidade,
+        estado: enderecoDados.estado,
+      }))
+    } catch (error) {
+      console.error('Erro ao carregar os dados do endereço:', error);
+    }
+  }
   
-  const [isAddingItems, setIsAddingItems] = useState(true) // True: adicionando itens, False: upload de arquivo
-  const isMobile = window.innerWidth < 600; // Verifica se a tela é pequena
+
+  useEffect(() => {
+    if (loading) return
+    
+    const timer = setTimeout(() => {
+      if (!user) {
+        navigate('/not-found')
+      } else if (user.tipoUsuario !== 'cliente' && user.tipoUsuario !== 'admin') {
+        navigate('/not-found')
+      } else {
+        setLoadingComponentState(false)
+      }
+    }, 500)
+  
+    return () => clearTimeout(timer)
+  }, [user, loading, navigate])
+  
+  if (loading || loadingComponentState) {
+    return <Loading />
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
+    const { value } = e.target
+    if(e.target.name === 'cep') {
+      const cpfFormatado = value
+      .replace(/\D/g, '') // Remove tudo que não é dígito
+      .replace(/(\d{5})(\d)/, '$1-$2') // Adiciona o traço após os 5 primeiros dígitos
+      .substring(0, 10) // Limita a 10 caracteres (incluindo o traço)
+
+    // Atualiza o estado apenas se o CEP não estiver completo
+    setFormData((prevData) => ({
+      ...prevData,
+      cep: cpfFormatado.length < 10 ? cpfFormatado : prevData.cep,
+    }))
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [e.target.name]: value,
+      }))
+    }
   }
+
 
   const handleItemChange = (index: number, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
@@ -66,11 +221,11 @@ export default function NovoPedido(){
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      setFormData({ ...formData, arquivo: file });
+      setFormData({ ...formData, arquivo: file })
     }
-  };
+  }
 
   const toggleAddMethod = () => {
     setIsAddingItems((prev) => !prev)
@@ -86,18 +241,25 @@ export default function NovoPedido(){
     console.log(formData)
   }
 
-  return (
-    <Stack spacing={4} sx={{ maxWidth: "100%", maxHeight: "900px", mx: 'auto', mt: "15px", mg: 10 }}>
-      <Typography variant="h4" align="left">
-        Novo Pedido
-      </Typography>
+  const Content = (
+    <Stack spacing={4} sx={{ maxWidth: '100%', maxHeight: '900px', mx: 'auto', mt: '15px', mg: 10 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="h4" align="left">
+         Novo Pedido
+        </Typography>
+        {acessoPelaRota && (
+          <IconButton className='text-cinza_claro' onClick={() => navigate('/')}>
+            <HomeIcon />
+          </IconButton>
+        )}
+      </Stack>
       <Paper elevation={1} sx={{ padding: '20px', borderRadius: '10px' }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={2}>
             <FormLabel htmlFor="cep">CEP</FormLabel>
             <TextField
               fullWidth
-              placeholder="Digite seu CEP"
+              placeholder="Digite seu CEP (XXXXX-XXX)"
               name="cep"
               value={formData.cep}
               onChange={handleChange}
@@ -110,8 +272,8 @@ export default function NovoPedido(){
                 placeholder="Digite o endereço de entrega"
                 name="enderecoEntrega"
                 value={formData.enderecoEntrega}
-                onChange={handleChange}
                 variant="outlined"
+                disabled={true}
               />
               <TextField
                 placeholder="Número"
@@ -130,8 +292,8 @@ export default function NovoPedido(){
                   fullWidth
                   variant="outlined"
                   name="cidade"
+                  disabled={true}
                   value={formData.cidade}
-                  onChange={handleChange}
                 />
               </FormControl>
               <FormControl sx={{ flexGrow: 1 }}>
@@ -142,15 +304,15 @@ export default function NovoPedido(){
                   fullWidth
                   variant="outlined"
                   name="estado"
+                  disabled={true}
                   value={formData.estado}
-                  onChange={handleChange}
                 />
               </FormControl>
             </Stack>
 
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="h6">Adicionar itens ou arquivo</Typography>
-              <Button onClick={toggleAddMethod} className='bg-verde_claro text-white' sx={{ textTransform: 'none'}}>
+              <Button onClick={toggleAddMethod} className="bg-verde_claro text-white" sx={{ textTransform: 'none' }}>
                 {isAddingItems ? 'Adicionar arquivo' : 'Adicionar itens'}
               </Button>
             </Stack>
@@ -185,7 +347,7 @@ export default function NovoPedido(){
                   variant="outlined"
                   startIcon={<AddCircleOutlineIcon />}
                   onClick={handleAddItem}
-                  className='bg-verde_claro text-white border-verde_footer'
+                  className="bg-verde_claro text-white border-verde_footer"
                 >
                   Adicionar Novo Item
                 </Button>
@@ -193,14 +355,15 @@ export default function NovoPedido(){
             ) : (
               <TextField
                 fullWidth
-                label="Selecione um arquivo"
+                label="Selecione um arquivo ou tire uma foto"
                 name="arquivo"
                 type="file"
                 onChange={handleFileChange}
                 InputLabelProps={{ shrink: true }}
                 InputProps={{
                   inputProps: {
-                    capture: isMobile ? "environment" : undefined,
+                    capture: isMobile ? 'environment' : undefined,
+                    accept: 'image/*, .csv',
                   },
                   endAdornment: (
                     <InputAdornment position="end">
@@ -224,7 +387,7 @@ export default function NovoPedido(){
               variant="outlined"
             />
 
-            <Button variant="contained" className='bg-verde_claro' type="submit" fullWidth>
+            <Button variant="contained" className="bg-verde_claro" type="submit" fullWidth>
               Enviar
             </Button>
           </Stack>
@@ -232,4 +395,47 @@ export default function NovoPedido(){
       </Paper>
     </Stack>
   )
+
+  return user?.ativo ? (
+    acessoPelaRota ? (
+      <AppTheme {...props}>
+        <CssBaseline enableColorScheme />
+        <Container sx={{ mt: 4, mb: 4 }}>{Content}</Container>
+      </AppTheme>
+    ) : (
+      Content // Renderiza apenas o Content se o acesso não for pela rota
+    )
+  ) : (
+    <Box 
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: { xs: '16px', md: '32px' },
+      bgcolor: 'white',
+      margin: { xs: '16px', md: '32px' },
+      height: '100%',
+    }}
+    aria-live="polite"
+  >
+    <Box sx={{ textAlign: 'center' }}>
+      <WarningIcon sx={{ fontSize: 48, color: '#656565' }} />
+      <Typography variant="h6" color="error" gutterBottom>
+        Conta desativada!
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        Para realizar suas atividades normalmente, ative sua conta novamente.
+      </Typography>
+      <Button
+        variant="contained"
+        sx={{ marginTop: '16px' }}
+        onClick={handleAtivarContaAsync}
+        className="bg-verde_claro"
+      >
+        Ativar Conta
+      </Button>
+    </Box>
+  </Box>
+  )  
 }

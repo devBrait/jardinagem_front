@@ -15,9 +15,12 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Fab,
+  Tooltip,
 } from "@mui/material"
 import MenuIcon from "@mui/icons-material/Menu"
 import { useNavigate } from "react-router-dom"
+import AddIcon from "@mui/icons-material/Add"
 import { useAuth } from "../../AuthContext"
 
 export default function Navbar() {
@@ -219,7 +222,40 @@ export default function Navbar() {
             }
           >
               <Typography variant="body1" className="text-lg">Vantagens</Typography>
+          </Link>
+          {user?.tipoUsuario === 'cliente' ? (
+            <>
+              <Typography mx={1} color="#656565">
+                |
+              </Typography>
+              <Link href="/" underline="none" 
+                sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease" }}
+                onClick={(e) => {
+                    e.preventDefault()
+                    navigate("/realiza-pedido")                 
+                }
+                }
+              >
+              <Typography variant="body1" className="text-lg">Faça seu Pedido</Typography>
             </Link>
+            </>
+          ) : user?.tipoUsuario === 'fornecedor' ? (
+            <>
+              <Typography mx={1} color="#656565">
+                |
+              </Typography>
+              <Link href="/" underline="none" 
+                sx={{ mx: 2, color: "#656565", "&:hover": { color: "#000" }, transition: "color 0.3s ease" }}
+                onClick={(e) => {
+                    e.preventDefault()
+                    navigate("/cadastro-planta")                 
+                }
+                }
+              >
+              <Typography variant="body1" className="text-lg">Cadastre sua Planta</Typography>
+              </Link>
+            </>
+          ) : null}
           </Box>
 
           {/* Botões de Login e Cadastro */}
@@ -356,6 +392,31 @@ export default function Navbar() {
           </List>
         </Box>
       </Drawer>
+      {user?.tipoUsuario && (
+          <Tooltip title={user.tipoUsuario === 'cliente' ? "Faça seu Pedido" : "Cadastre sua Planta"} arrow>
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={() => {
+              if (user.tipoUsuario === 'cliente') {
+                navigate("/realiza-pedido")
+              } else if (user.tipoUsuario === 'fornecedor') {
+                navigate("/cadastro-planta")
+              }
+            }}
+            sx={{
+              display: { xs: "flex", md: "none" },
+              position: "fixed", 
+              bottom: 16,
+              right: 16,
+              backgroundColor: "#98b344",
+              "&:hover": { backgroundColor: "#7a9244" }
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+        
+      )}
     </>
-  )
-}
+  )}

@@ -10,13 +10,40 @@ export default function Configuracoes() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const { user } = useAuth()
+  const { user, update } = useAuth()
   const apiurl = import.meta.env.VITE_APP_API_URL
 
   const handleClickShowPassword = () => {
     setShowPassword((prev) => !prev)
   }
 
+  const handleAlternaEstadoContaAsync = async () => {
+    const url = user?.tipoUsuario === 'cliente' 
+      ? `${apiurl}/clientes/alterna-estado` 
+      : `${apiurl}/fornecedores/alterna-estado`
+
+    try {
+      const response = await axios.put(url, {email: user?.email}, {withCredentials: true})
+      
+      if (response.status === 200 || response.status === 204) {
+        if(user?.ativo){
+          toastr.error('Conta desativada com sucesso!')
+        }else{
+          toastr.success('Conta ativada com sucesso!')
+        }
+
+
+        if (user) {
+          update({ ...user, ativo: !user.ativo })
+        }
+
+      } else {
+        toastr.error('Não foi possível desativar a conta. Tente novamente mais tarde.')
+      }
+    } catch {
+      toastr.error('Ocorreu um erro ao tentar desativar a conta.')
+    }
+  }
   const handleClickShowConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev)
   }
@@ -157,10 +184,10 @@ export default function Configuracoes() {
       <Card variant="outlined" style={{ marginTop: '20px' }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Desativar Conta
+            {user?.ativo ? 'Desativar Conta' : 'Ativar Conta' }
           </Typography>
           <Typography color="text.secondary" gutterBottom>
-            Se você deseja desativar sua conta, clique no botão abaixo.
+            Se você deseja desativar ou ativar sua conta, clique no botão abaixo.
           </Typography>
           <Divider orientation="horizontal" style={{ margin: '16px 0', width: '100%' }} />
 
@@ -168,14 +195,15 @@ export default function Configuracoes() {
             <Button
               variant="contained"
               sx={{
-                backgroundColor: '#e95a5a',
+                backgroundColor: user?.ativo ? '#e95a5a' : '#98b344', 
                 color: '#fff',
                 '&:hover': {
-                  backgroundColor: '#d85b5b',
+                  backgroundColor: user?.ativo ? '#d85b5b' : '#98b344', 
                 }
               }}
+              onClick={handleAlternaEstadoContaAsync}
             >
-              Desativar Conta
+              {user?.ativo ? 'Desativar Conta' : 'Ativar Conta'}
             </Button>
           </Box>
         </CardContent>
