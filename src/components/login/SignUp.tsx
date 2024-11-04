@@ -255,8 +255,8 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         data = await cadastraConta(url, dadosUsuario)
         if (data) {
           toastr.success('Usuário cadastrado com sucesso!')
-          const userData = { email: email, tipoUsuario: 'cliente' }
-          login(userData) // Armazena o token no contexto
+          const userData = { email: email, tipoUsuario: 'cliente', ativo: true }
+          login(userData) 
           navigate('/dashboard-cliente')
         }
       } else {
@@ -274,7 +274,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         data = await cadastraConta(url, dadosUsuario)
         if (data) {
           toastr.success('Usuário cadastrado com sucesso!')
-          const userData = { email: email, tipoUsuario: 'fornecedor' }
+          const userData = { email: email, tipoUsuario: 'fornecedor', ativo: true }
           login(userData)
           navigate('/dashboard-fornecedor')
         }
