@@ -4,6 +4,7 @@ import axios from 'axios'
 interface User {
   email: string
   tipoUsuario: string
+  ativo: boolean
 }
 
 interface AuthContextType {
@@ -11,6 +12,7 @@ interface AuthContextType {
   loading: boolean
   login: (userData: User) => void
   logout: () => void
+  update: (userData: User) => void
 }
 
 const apiurl = import.meta.env.VITE_APP_API_URL
@@ -30,8 +32,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const token = getTokenFromCookies()
     if (token) {
       try {
-        const decoded = jwtDecode(token) as { id: number, email: string, tipoUsuario: string }
-        setUser({ email: decoded.email, tipoUsuario: decoded.tipoUsuario })
+        const decoded = jwtDecode(token) as { id: number, email: string, tipoUsuario: string, ativo: boolean }
+        setUser({ email: decoded.email, tipoUsuario: decoded.tipoUsuario, ativo: decoded.ativo })
       } catch (error) {
         console.error("Erro ao decodificar token:", error)
         setUser(null)
@@ -56,8 +58,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [])
 
+  const update = useCallback((userData: User | null) => {
+    setUser(userData);
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, update }}>
       {children}
     </AuthContext.Provider>
   )
