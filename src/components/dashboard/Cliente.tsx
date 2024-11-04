@@ -23,9 +23,7 @@ export default function Cliente(props: { disableCustomTheme?: boolean }) {
   const apiurl = import.meta.env.VITE_APP_API_URL
 
   const handleAtivarContaAsync = async () => {
-    const url = user?.tipoUsuario === 'cliente' 
-      ? `${apiurl}/clientes/alterna-estado` 
-      : `${apiurl}/fornecedores/alterna-estado`
+    const url = `${apiurl}/clientes/alterna-estado` 
 
     try {
       const response = await axios.put(url, {email: user?.email}, {withCredentials: true})

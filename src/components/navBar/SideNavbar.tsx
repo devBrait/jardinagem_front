@@ -23,6 +23,8 @@ import ContaCliente from '../conta/ContaCliente'
 import ContaFornecedor from '../conta/ContaFornecedor'
 import GerenciarUsuarios from '../admin/GerenciarUsuarios'
 import NovoNomePopular from '../admin/NovoNomePopular'
+import NovoNomeCientifico from '../admin/NovoNomeCientifico'
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline'
 
 interface MenuItem {
     text: string
@@ -65,6 +67,7 @@ export default function SideNavbar({ setCurrentComponent }: { setCurrentComponen
     { text: 'Home', icon: <HomeIcon sx={{ marginRight: 3 }} />, value: 'home' },
     { text: 'Gerenciar Usuários', icon: <PeopleIcon sx={{ marginRight: 3 }} />, value: 'gerenciarUsuarios', component: <GerenciarUsuarios handleNomePopularClick={handleNomePopularClick} /> },
     { text: 'Novo nome popular', icon: <LibraryAddIcon sx={{ marginRight: 3 }} />, value: 'novoNomePopular', component: <NovoNomePopular /> },
+    { text: 'Novo nome científico', icon: <DriveFileRenameOutlineIcon sx={{ marginRight: 3 }} />, value: 'novoNomeCientifico', component: <NovoNomeCientifico /> },
 ] : []
 
   

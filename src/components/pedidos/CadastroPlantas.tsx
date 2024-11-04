@@ -16,6 +16,7 @@ import {
   CssBaseline,
   Container,
   IconButton,
+  Box,
 } from "@mui/material"
 import { useAuth } from "../../AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -23,6 +24,9 @@ import Loading from "../loading/Loading"
 import AppTheme from "../../css/theme/AppTheme"
 import HomeIcon from '@mui/icons-material/Home'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
+import WarningIcon from '@mui/icons-material/Warning'
+import toastr from 'toastr'
+import axios from "axios"
 
 interface FormData {
   nome_cientifico: string
@@ -63,11 +67,33 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   const [rowsPerPage, setRowsPerPage] = useState(5) 
   const isMobile = window.innerWidth < 600 
   
-  const { user, loading } = useAuth()
+  const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/cadastro-planta'
+  const apiurl = import.meta.env.VITE_APP_API_URL
+
+  const handleAtivarContaAsync = async () => {
+    const url = `${apiurl}/fornecedores/alterna-estado` 
+
+    try {
+      const response = await axios.put(url, {email: user?.email}, {withCredentials: true})
+      
+      if (response.status === 200 || response.status === 204) {
+          toastr.success('Conta ativada com sucesso!')
+
+        if (user) {
+          update({ ...user, ativo: !user.ativo })
+        }
+
+      } else {
+        toastr.error('Não foi possível desativar a conta. Tente novamente mais tarde.')
+      }
+    } catch {
+      toastr.error('Ocorreu um erro ao tentar desativar a conta.')
+    }
+  }
 
   useEffect(() => {
     if (loading) return
@@ -350,11 +376,46 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   </Stack>
   )
 
-  return acessoPelaRota ? 
-    <AppTheme {...props}>
-      <CssBaseline enableColorScheme />
-        <Container  sx={{ mt: 4, mb: 4 }}>{Content}</Container> 
-    </AppTheme>
-    : 
-    Content
+  return user?.ativo ? (
+    acessoPelaRota ? (
+      <AppTheme {...props}>
+        <CssBaseline enableColorScheme />
+        <Container sx={{ mt: 4, mb: 4 }}>{Content}</Container>
+      </AppTheme>
+    ) : (
+      Content // Renderiza apenas o Content se o acesso não for pela rota
+    )
+  ) : (
+    <Box 
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: { xs: '16px', md: '32px' },
+      bgcolor: 'white',
+      margin: { xs: '16px', md: '32px' },
+      height: '100%',
+    }}
+    aria-live="polite"
+  >
+    <Box sx={{ textAlign: 'center' }}>
+      <WarningIcon sx={{ fontSize: 48, color: '#656565' }} />
+      <Typography variant="h6" color="error" gutterBottom>
+        Conta desativada!
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        Para realizar suas atividades normalmente, ative sua conta novamente.
+      </Typography>
+      <Button
+        variant="contained"
+        sx={{ marginTop: '16px' }}
+        onClick={handleAtivarContaAsync}
+        className="bg-verde_claro"
+      >
+        Ativar Conta
+      </Button>
+    </Box>
+  </Box>
+  )  
 }
