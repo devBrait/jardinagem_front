@@ -6,16 +6,16 @@ import {
   Paper,
   Stack,
   IconButton,
-  InputAdornment,
   FormLabel,
   FormControl,
   Container,
   CssBaseline,
   Box,
+  InputAdornment,
 } from '@mui/material'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
-import FileUploadIcon from '@mui/icons-material/FileUpload'
+import CameraAltIcon from '@mui/icons-material/CameraAlt'
 import { useAuth } from '../../AuthContext'
 import Loading from '../loading/Loading'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -24,7 +24,6 @@ import AppTheme from '../../css/theme/AppTheme'
 import axios from 'axios'
 import toastr from 'toastr'
 import WarningIcon from '@mui/icons-material/Warning'
-
 interface FormData {
   cep: string
   enderecoEntrega: string
@@ -37,8 +36,7 @@ interface FormData {
 }
 
 export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
-  const [isAddingItems, setIsAddingItems] = useState(true)
-  const isMobile = window.innerWidth < 600
+  const [capturedImage, setCapturedImage] = useState('')
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const navigate = useNavigate()
@@ -218,20 +216,15 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     setFormData({ ...formData, itens: newItens })
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const capturaImagem = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (file) {
-      setFormData({ ...formData, arquivo: file })
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setCapturedImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-  }
-
-  const toggleAddMethod = () => {
-    setIsAddingItems((prev) => !prev)
-    setFormData({
-      ...formData,
-      itens: isAddingItems ? [{ nome: '', quantidade: '' }] : [],
-      arquivo: isAddingItems ? null : formData.arquivo,
-    })
   }
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
@@ -309,32 +302,44 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
             </Stack>
 
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6">Adicionar itens ou arquivo</Typography>
-              <Button onClick={toggleAddMethod} className="bg-verde_claro text-white" sx={{ textTransform: 'none' }}>
-                {isAddingItems ? 'Adicionar arquivo' : 'Adicionar itens'}
-              </Button>
+              <Typography variant="h6">Adicionar itens</Typography>
+              <Button
+                className="bg-verde_claro text-white"
+                sx={{ textTransform: 'none'}}
+                component="label"
+                >
+                <CameraAltIcon sx={{ mr: 1 }} />
+                  Adicionar por imagem
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={capturaImagem}
+                  style={{ display: 'none' }}
+                />
+            </Button>
             </Stack>
-
-            {isAddingItems ? (
-              <>
+            <>
                 {formData.itens.map((item, index) => (
                   <Stack key={index} direction="row" spacing={2} alignItems="center">
                     <TextField
-                      label="Nome do Item"
-                      placeholder="Digite o nome do item"
+                      label="Nome da planta"
+                      placeholder="Digite o nome popular da planta"
                       name="nome"
                       value={item.nome}
                       onChange={(e) => handleItemChange(index, e)}
                       variant="outlined"
+                      sx={{ width: '100%', maxWidth: 400 }}
                     />
                     <TextField
                       label="Quantidade"
-                      placeholder="Digite a quantidade"
+                      placeholder="Digite a quantidade em unidades"
                       name="quantidade"
                       value={item.quantidade}
                       onChange={(e) => handleItemChange(index, e)}
                       type="number"
                       variant="outlined"
+                      sx={{ width: '50%', maxWidth: 320 }}
                     />
                     <IconButton onClick={() => handleRemoveItem(index)}>
                       <RemoveCircleOutlineIcon color="error" />
@@ -350,29 +355,6 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
                   Adicionar Novo Item
                 </Button>
               </>
-            ) : (
-              <TextField
-                fullWidth
-                label="Selecione um arquivo ou tire uma foto"
-                name="arquivo"
-                type="file"
-                onChange={handleFileChange}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  inputProps: {
-                    capture: isMobile ? 'environment' : undefined,
-                    accept: 'image/*, .csv',
-                  },
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <FileUploadIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                variant="outlined"
-              />
-            )}
-
             <FormLabel htmlFor="observacoes">Observações Gerais</FormLabel>
             <TextField
               fullWidth

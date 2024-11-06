@@ -109,7 +109,7 @@ export default function NovoNomeCientifico() {
         Cadastro de Nome Científico
       </Typography>
   
-      <Paper elevation={1} sx={{ padding: '20px', borderRadius: '10px' }}>
+      <Paper elevation={1} sx={{ padding: '15px', borderRadius: '10px' }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={2}>
             <FormLabel htmlFor="nomeCientifico">Nome Científico</FormLabel>
@@ -136,7 +136,7 @@ export default function NovoNomeCientifico() {
         </form>
       </Paper>
   
-      <Paper elevation={1} sx={{ paddingX: '20px', borderRadius: '10px', paddingBottom: '10px' }}>
+      <Paper elevation={1} sx={{ paddingX: '10px', borderRadius: '10px', paddingBottom: '10px' }}>
         <Stack spacing={2}>
           <Typography variant="h6" align="left">
             Lista de Nomes Científicos
