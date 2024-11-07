@@ -10,9 +10,6 @@ import {
   TableCell,
   TableBody,
   TablePagination,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Menu,
   MenuItem,
   IconButton,
@@ -23,21 +20,26 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import axios from "axios"
 import toastr from 'toastr'
+import DetalhesUsuarioDialog from "../dialogs/DetalhesUsuario.dialog"
 
 interface Paisagista {
+  tipoUsuario: 'paisagista'
   id: number
+  nome_fantasia: string
   nome: string
   email: string
   cpf: number
+  telefone: string
   data_nascimento: Date
   CEP: string
-  telefone: string
   ativo: boolean
 }
 
 interface Fornecedor {
+  tipoUsuario: 'fornecedor'
   id: number
   cnpj: number 
+  nome: string
   nome_fantasia: string
   razao_social: string
   ctt_1: string
@@ -51,6 +53,7 @@ interface Fornecedor {
   ativo: boolean
 }
 
+type Usuario = Paisagista | Fornecedor
 
 interface ResponsePaisagista {
   success: boolean
@@ -85,9 +88,12 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
   const [rowsPerPagePaisagistas, setRowsPerPagePaisagistas] = useState(5)
   
   const [elementoMenu, setElementoMenu] = useState<null | HTMLElement>(null)
-  const [openModal, setOpenModal] = useState(false)
-  const [selectedOption, setSelectedOption] = useState('')
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState<{ id: number; name: string } | null>(null)
+  const [elementoMenuFornecedor, setElementoMenuFornecedor] = useState<null | HTMLElement>(null)
+  const [openModalVisualizarPaisagista, setOpenModalVisualizarPaisagista] = useState(false)
+  const [openModalVisualizarFornecedor, setOpenModalVisualizarFornecedor] = useState(false)
+  //const [openModalAlternar, setOpenModalAlternar] = useState(false)
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<{ usuario: Usuario } | null>(null)
+  const [usuarioSelecionadoParaVisualizar, setUsuarioSelecionadoParaVisualizar] = useState<{ usuario: Usuario } | null>(null)
   const apiurl = import.meta.env.VITE_APP_API_URL
   const limitPerPage = 10
 
@@ -95,15 +101,50 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
   const [pageFornecedores, setPageFornecedores] = useState(0)
   const [rowsPerPageFornecedores, setRowsPerPageFornecedores] = useState(5)
 
+  function isPaisagista(usuario: Usuario): usuario is Paisagista {
+    return (usuario as Paisagista).cpf !== undefined
+  }
+  
+  function isFornecedor(usuario: Usuario): usuario is Fornecedor {
+    return (usuario as Fornecedor).cnpj !== undefined
+  }
   
 
-    const handleMenuClick = (event: React.MouseEvent<HTMLElement>, usuario: { id: number; name: string; nome_fantasia?: string }) => {
-      setElementoMenu(event.currentTarget)
-      setUsuarioSelecionado(usuario)
+    const handleMenuClick = 
+    (event: React.MouseEvent<HTMLElement>, usuario: Usuario ) => {
+      if(isPaisagista(usuario)){
+        setElementoMenu(event.currentTarget)
+        setUsuarioSelecionado({ usuario })
+      }else if(isFornecedor(usuario)){
+        setElementoMenuFornecedor(event.currentTarget)
+        setUsuarioSelecionado({ usuario })
+      }
+    }
+
+    const handleOptionClick = (option: string) => {
+      if (option === 'Visualizar' && usuarioSelecionado) {
+        setUsuarioSelecionadoParaVisualizar({ usuario: usuarioSelecionado.usuario })
+        if (isPaisagista(usuarioSelecionado.usuario)) {
+          setOpenModalVisualizarPaisagista(true)
+        } else if (isFornecedor(usuarioSelecionado.usuario)) {
+          setOpenModalVisualizarFornecedor(true)
+        }
+        handleMenuClose()
+      }
+      
+      if(option === 'Alternar'){
+        //setOpenModalAlternar(true)
+        handleMenuClose()
+      }
+    }    
+    const handleCloseModal = () => {
+      setOpenModalVisualizarPaisagista(false)
+      setOpenModalVisualizarFornecedor(false)
+      //setOpenModalAlternar(false)
     }
   
     useEffect(() => {
-      const fetchPaisagistas = async () => {
+      const fetchUsuarios = async () => {
         try {
           setLoading(true)
           const responsePaisagistas = 
@@ -114,28 +155,21 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
 
           setFornecedores(responseFornecedores.data.data)
           setPaisagistas(responsePaisagistas.data.data)
-        } catch (err) {
-          console.log(err)
+        } catch{
           toastr.error("Erro ao buscar usuários!")
         }finally {
           setLoading(false)
         }
       }
-      fetchPaisagistas()
+      fetchUsuarios()
     }, [apiurl, pagePaisagistas, pageFornecedores, limitPerPage])
   
     const handleMenuClose = () => {
       setElementoMenu(null)
     }
-  
-    const handleOptionClick = (option: string) => {
-      setSelectedOption(option)
-      setOpenModal(true)
-      handleMenuClose()
-    }
-  
-    const handleCloseModal = () => {
-      setOpenModal(false)
+
+    const handleMenuCloseFornecedor = () => {
+      setElementoMenuFornecedor(null)
     }
   
     const handleChangePagePaisagistas = (_event: unknown, newPage: number) => {
@@ -240,7 +274,8 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
                   </span>
                 </TableCell>
                 <TableCell>
-                <IconButton onClick={(event) => handleMenuClick(event, { id: paisagista.id, name: paisagista.nome })}>
+                <IconButton onClick={(event) => 
+                  handleMenuClick(event, paisagista)}>
                   <MoreVertIcon />
                 </IconButton>
               </TableCell>
@@ -261,18 +296,23 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
         onRowsPerPageChange={handleChangeRowsPerPagePaisagistas}   
       />
       <Menu anchorEl={elementoMenu} open={Boolean(elementoMenu)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => handleOptionClick('Editar')}>Editar</MenuItem>
-        <MenuItem onClick={() => handleOptionClick('Visualizar')}>Visualizar</MenuItem>
-      </Menu>
+      <MenuItem onClick={() => handleOptionClick('Visualizar')}>Visualizar</MenuItem>
+      {usuarioSelecionado && isPaisagista(usuarioSelecionado.usuario) && (
+        <MenuItem 
+          key={usuarioSelecionado.usuario.id} 
+          onClick={() => handleOptionClick('Alternar')}
+        >
+          {usuarioSelecionado.usuario.ativo ? 'Desativar' : 'Ativar'}
+        </MenuItem>
+      )}
 
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>{selectedOption} Pedido</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Ação: {selectedOption} para o/a {usuarioSelecionado ? usuarioSelecionado.name : ''}.
-          </Typography>
-        </DialogContent>
-      </Dialog>
+    </Menu>
+    <DetalhesUsuarioDialog
+      open={openModalVisualizarPaisagista}
+      onClose={handleCloseModal}
+      usuario={usuarioSelecionadoParaVisualizar?.usuario || null}
+      tipoUsuario={'paisagista'}
+    />
     </Paper>
 
     <Paper elevation={2} sx={{ paddingX: "20px", borderRadius: "10px" }}>
@@ -322,7 +362,8 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
                   </span>
                 </TableCell>
                 <TableCell>
-                <IconButton onClick={(event) => handleMenuClick(event, { id: fornecedor.id, name: fornecedor.nome_fantasia, nome_fantasia: fornecedor.nome_fantasia })}>
+                <IconButton onClick={(event) => 
+                  handleMenuClick(event, fornecedor as Usuario)}>
                   <MoreVertIcon />
                 </IconButton>
               </TableCell>
@@ -342,29 +383,27 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
         onPageChange={handleChangePageFornecedores}
         onRowsPerPageChange={handleChangeRowsPerPageFornecedores}
       />
-      <Menu anchorEl={elementoMenu} open={Boolean(elementoMenu)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => handleOptionClick('Editar')}>Editar</MenuItem>
+      <Menu anchorEl={elementoMenuFornecedor} open={Boolean(elementoMenuFornecedor)} onClose={handleMenuCloseFornecedor}>
         <MenuItem onClick={() => handleOptionClick('Visualizar')}>Visualizar</MenuItem>
+        {usuarioSelecionado && isFornecedor(usuarioSelecionado.usuario) && (
+        <MenuItem 
+          key={usuarioSelecionado.usuario.id} 
+          onClick={() => handleOptionClick('Alternar')}>
+          {usuarioSelecionado.usuario.ativo ? 'Desativar' : 'Ativar'}
+        </MenuItem>
+      )}
       </Menu>
-
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>{selectedOption} usuário</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Ação: {selectedOption} para o/a {usuarioSelecionado ? usuarioSelecionado.name : ''}.
-          </Typography>
-        </DialogContent>
-      </Dialog>
+      <DetalhesUsuarioDialog
+        open={openModalVisualizarFornecedor}
+        onClose={handleCloseModal}
+        usuario={usuarioSelecionadoParaVisualizar?.usuario || null} 
+        tipoUsuario={'fornecedor'} 
+      />
     </Paper>
   </Stack>
     
   return loading ? (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh'
-    }}>
+    <div className='flex justify-center items-center h-screen'>
       <CircularProgress sx={{ display: 'block' }} />
     </div>
   ) : Content
