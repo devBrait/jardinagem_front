@@ -21,6 +21,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import axios from "axios"
 import toastr from 'toastr'
 import DetalhesUsuarioDialog from "../dialogs/DetalhesUsuario.dialog"
+import StatusUsuarioDialog from "../dialogs/StatusUsuario.dialog"
 
 interface Paisagista {
   tipoUsuario: 'paisagista'
@@ -91,7 +92,8 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
   const [elementoMenuFornecedor, setElementoMenuFornecedor] = useState<null | HTMLElement>(null)
   const [openModalVisualizarPaisagista, setOpenModalVisualizarPaisagista] = useState(false)
   const [openModalVisualizarFornecedor, setOpenModalVisualizarFornecedor] = useState(false)
-  //const [openModalAlternar, setOpenModalAlternar] = useState(false)
+  const [openModalAlternarPaisagista, setOpenModalAlternarPaisagista] = useState(false)
+  const [openModalAlternarFornecedor, setOpenModalAlternarFornecedor] = useState(false)
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<{ usuario: Usuario } | null>(null)
   const [usuarioSelecionadoParaVisualizar, setUsuarioSelecionadoParaVisualizar] = useState<{ usuario: Usuario } | null>(null)
   const apiurl = import.meta.env.VITE_APP_API_URL
@@ -109,6 +111,25 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
     return (usuario as Fornecedor).cnpj !== undefined
   }
   
+
+    const handleStatus = (email: string) => {
+      const updatedFornecedores = fornecedores.map(fornecedor => {
+        if (fornecedor.email === email) {
+          return { ...fornecedor, ativo: !fornecedor.ativo }
+        }
+        return fornecedor
+      })
+
+      const updatedPaisagistas = paisagistas.map(paisagista => {
+        if (paisagista.email === email) {
+          return { ...paisagista, ativo: !paisagista.ativo }
+        }
+        return paisagista
+      })
+
+      setFornecedores(updatedFornecedores)
+      setPaisagistas(updatedPaisagistas)
+    }
 
     const handleMenuClick = 
     (event: React.MouseEvent<HTMLElement>, usuario: Usuario ) => {
@@ -132,17 +153,24 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
         handleMenuClose()
       }
       
-      if(option === 'Alternar'){
-        //setOpenModalAlternar(true)
+      if(option === 'Alternar' && usuarioSelecionado){
+        setUsuarioSelecionadoParaVisualizar({ usuario: usuarioSelecionado.usuario })
+        if (isPaisagista(usuarioSelecionado.usuario)) {
+          setOpenModalAlternarPaisagista(true)
+        } else if (isFornecedor(usuarioSelecionado.usuario)) {
+          setOpenModalAlternarFornecedor(true)
+        }
         handleMenuClose()
       }
     }    
+
     const handleCloseModal = () => {
       setOpenModalVisualizarPaisagista(false)
+      setOpenModalAlternarPaisagista(false)
       setOpenModalVisualizarFornecedor(false)
-      //setOpenModalAlternar(false)
+      setOpenModalAlternarFornecedor(false)
     }
-  
+
     useEffect(() => {
       const fetchUsuarios = async () => {
         try {
@@ -313,6 +341,13 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
       usuario={usuarioSelecionadoParaVisualizar?.usuario || null}
       tipoUsuario={'paisagista'}
     />
+     <StatusUsuarioDialog
+        open={openModalAlternarPaisagista}
+        onClose={handleCloseModal}
+        email={usuarioSelecionadoParaVisualizar?.usuario.email || ''} 
+        tipoUsuario={'paisagista'} 
+        onStatusChange={handleStatus}
+      />
     </Paper>
 
     <Paper elevation={2} sx={{ paddingX: "20px", borderRadius: "10px" }}>
@@ -363,7 +398,7 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
                 </TableCell>
                 <TableCell>
                 <IconButton onClick={(event) => 
-                  handleMenuClick(event, fornecedor as Usuario)}>
+                  handleMenuClick(event, fornecedor)}>
                   <MoreVertIcon />
                 </IconButton>
               </TableCell>
@@ -398,6 +433,13 @@ export default function GerenciarUsuarios({ handleNomePopularClick }: { handleNo
         onClose={handleCloseModal}
         usuario={usuarioSelecionadoParaVisualizar?.usuario || null} 
         tipoUsuario={'fornecedor'} 
+      />
+      <StatusUsuarioDialog
+        open={openModalAlternarFornecedor}
+        onClose={handleCloseModal}
+        email={usuarioSelecionadoParaVisualizar?.usuario.email || ''} 
+        tipoUsuario={'fornecedor'} 
+        onStatusChange={handleStatus}
       />
     </Paper>
   </Stack>
