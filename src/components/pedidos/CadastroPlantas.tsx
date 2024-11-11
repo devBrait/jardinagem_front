@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import {
   Stack,
   Typography,
@@ -17,6 +17,7 @@ import {
   Container,
   IconButton,
   Box,
+  CircularProgress,
 } from "@mui/material"
 import { useAuth } from "../../AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -40,6 +41,27 @@ interface FormData {
   porte: string
   quantidade: number 
 }
+
+interface NomePopular {
+  id: number
+  nome: string
+  idNomeCientifico: number
+}
+
+interface NomeCientifico {
+  id: number
+  nome: string
+  nomesPopulares: NomePopular[]
+}
+
+interface ApiResponse {
+  data: NomeCientifico[]
+  pagination: {
+    totalPages: number
+    total: number
+  }
+}
+
 
 export default function CadastroPlantas(props: { disableCustomTheme?: boolean }) {
   const [formData, setFormData] = useState<FormData>({
@@ -66,13 +88,49 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   const [page, setPage] = useState(0) 
   const [rowsPerPage, setRowsPerPage] = useState(5) 
   const isMobile = window.innerWidth < 600 
-  
+  const [carregando, setCarregando] = useState(false)
+  const [nomesPopulares, setNomesPopulares] = useState<NomePopular[]>([])
+  const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/cadastro-planta'
   const apiurl = import.meta.env.VITE_APP_API_URL
+
+  const loadNomesPlantas = useCallback(async () => {
+    try {
+      setCarregando(true)
+      const response = await axios.get<ApiResponse>(
+        `${apiurl}/nomes-cientificos/cientifico-com-popular-sem-paginacao`, {withCredentials: true}
+      )
+      const nomesPopulares = response.data.data
+      .flatMap((nomeCientifico: NomeCientifico) =>
+        nomeCientifico.nomesPopulares.map((nomePopular: NomePopular) => ({
+          id: nomePopular.id,
+          nome: nomePopular.nome,
+          idNomeCientifico: nomePopular.idNomeCientifico,
+        }))
+      )
+      setNomesPopulares(nomesPopulares)
+  
+      const nomesCientificos = response.data.data
+      .map((nomeCientifico: NomeCientifico) => ({
+        id: nomeCientifico.id,
+        nome: nomeCientifico.nome,
+        nomesPopulares: nomeCientifico.nomesPopulares,
+      }))
+      setNomesCientificos(nomesCientificos)
+    } catch{
+      toastr.error('Erro ao carregar nomes científicos.')
+    } finally {
+      setCarregando(false)
+    }
+  }, [apiurl])
+
+  useEffect(() => {
+    loadNomesPlantas()
+  }, [loadNomesPlantas])
 
   const handleAtivarContaAsync = async () => {
     const url = `${apiurl}/fornecedores/alterna-estado` 
@@ -133,8 +191,30 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     }))
   }
 
+  const validaNomePopular = (nomePopular: string) => {
+  
+      const nomeEncontrado = nomesPopulares.find(
+        (item) => item.nome.toLowerCase() === nomePopular.toLowerCase()
+      )
+  
+      if (nomeEncontrado) {
+        const nomeCientificoEncontrado = nomesCientificos.find(
+          (item) => item.id === nomeEncontrado.id
+        )
+        console.log(nomeCientificoEncontrado)
+        if (nomeCientificoEncontrado) {
+          setFormData({ ...formData, nome_cientifico: nomeCientificoEncontrado.nome })
+        } else {
+          toastr.error('Nome científico não encontrado no sistema.')
+        }
+      } else {
+        toastr.error('Nome popular não encontrado no sistema.')
+      }
+  }
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    validateInputs()
     setPlants((prevPlants) => [
       ...prevPlants,
       { ...formData, status: "Disponível" },
@@ -151,6 +231,34 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
       porte: '',
       quantidade: 0,
     })
+  }
+
+  const validateInputs = () => {
+    const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
+
+    if (formData.nome_popular !== '') {
+      validaNomePopular(formData.nome_popular)
+      return
+    }
+
+
+    if(formData.nome_popular === '' || formData.nome_cientifico === '' 
+      || formData.altura_max <= 0 || formData.preco === '' || formData.floracao === '' 
+      || formData.tamanho <= 0 || formData.cor_folhagem === '' || formData.porte === '' 
+      || formData.quantidade <= 0) {
+      toastr.error('Todos os campos devem ser preenchidos.')
+      return
+    }
+
+    if(formData.floracao != 'Sim' && formData.floracao != 'Não') {
+      toastr.error('A floracao deve ser Sim ou Não.')
+      return
+    }
+
+    if (!formatoPreco.test(formData.preco)) {
+      toastr.error('O preço deve ser um valor válido em reais, como 1000,00.')
+      return
+    }
   }
 
   const displayedPlants = plants.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -186,18 +294,19 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
               <FormLabel htmlFor="nome_cientifico">Nome científico</FormLabel>
               <TextField
                 fullWidth
-                placeholder='Digite o nome científico da planta'
+                placeholder='Nome científico da planta'
                 name="nome_cientifico"
                 value={formData.nome_cientifico}
                 onChange={handleChange}
                 variant="outlined"
+                disabled={true}
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>
               <FormLabel htmlFor="floracao">Floração (Sim/Não)</FormLabel>
               <TextField
                 fullWidth
-                placeholder="Digite se a planta floresce"
+                placeholder="Digite se a planta floresce (Sim ou Não)"
                 name="floracao"
                 value={formData.floracao}
                 onChange={handleChange}
@@ -255,7 +364,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>
-              <FormLabel htmlFor="quantidade">Quantidade disponível</FormLabel>
+              <FormLabel htmlFor="quantidade">Quantidade disponível em unidades</FormLabel>
               <TextField
                 fullWidth
                 placeholder="Digite a quantidade disponível"
@@ -263,6 +372,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.quantidade}
                 onChange={handleChange}
                 variant="outlined"
+                type="number"
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>
@@ -376,7 +486,9 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   </Stack>
   )
 
-  return user?.ativo ? (
+  return carregando ? (
+    <CircularProgress /> 
+  ) : user?.ativo ? (
     acessoPelaRota ? (
       <AppTheme {...props}>
         <CssBaseline enableColorScheme />
@@ -386,36 +498,36 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
       Content // Renderiza apenas o Content se o acesso não for pela rota
     )
   ) : (
-    <Box 
-    sx={{
-      flexGrow: 1,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: { xs: '16px', md: '32px' },
-      bgcolor: 'white',
-      margin: { xs: '16px', md: '32px' },
-      height: '100%',
-    }}
-    aria-live="polite"
-  >
-    <Box sx={{ textAlign: 'center' }}>
-      <WarningIcon sx={{ fontSize: 48, color: '#656565' }} />
-      <Typography variant="h6" color="error" gutterBottom>
-        Conta desativada!
-      </Typography>
-      <Typography variant="body1" gutterBottom>
-        Para realizar suas atividades normalmente, ative sua conta novamente.
-      </Typography>
-      <Button
-        variant="contained"
-        sx={{ marginTop: '16px' }}
-        onClick={handleAtivarContaAsync}
-        className="bg-verde_claro"
-      >
-        Ativar Conta
-      </Button>
+    <Box
+      sx={{
+        flexGrow: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: { xs: '16px', md: '32px' },
+        bgcolor: 'white',
+        margin: { xs: '16px', md: '32px' },
+        height: '100%',
+      }}
+      aria-live="polite"
+    >
+      <Box sx={{ textAlign: 'center' }}>
+        <WarningIcon sx={{ fontSize: 48, color: '#656565' }} />
+        <Typography variant="h6" color="error" gutterBottom>
+          Conta desativada!
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          Para realizar suas atividades normalmente, ative sua conta novamente.
+        </Typography>
+        <Button
+          variant="contained"
+          sx={{ marginTop: '16px' }}
+          onClick={handleAtivarContaAsync}
+          className="bg-verde_claro"
+        >
+          Ativar Conta
+        </Button>
+      </Box>
     </Box>
-  </Box>
   )  
 }

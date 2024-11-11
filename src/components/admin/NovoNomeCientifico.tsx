@@ -8,8 +8,8 @@ import {
   List, 
   ListItem, 
   ListItemText,
-  Pagination,
   CircularProgress,
+  TablePagination,
 } from '@mui/material'
 import axios from 'axios'
 import { useState, useCallback, useEffect } from 'react'
@@ -24,51 +24,46 @@ interface ApiResponse {
   items: NomeCientifico[]
   pagination: {
     totalPages: number
+    total: number 
   }
 }
 
 export default function NovoNomeCientifico() {
   const [nome, setNomeCientifico] = useState('')
   const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const apiurl = import.meta.env.VITE_APP_API_URL
-  const limitPerPage = 10
 
   const loadNomesCientificos = useCallback(async () => {
     try {
       setLoading(true)
-
       const response = await axios.get<ApiResponse>(
-        `${apiurl}/nomes-cientificos?page=${page}&limit=${limitPerPage}&search=${searchTerm}`, {withCredentials: true}
+        `${apiurl}/nomes-cientificos?page=${page + 1}&limit=${rowsPerPage}&search=${searchTerm}`, {withCredentials: true}
       )
-      setNomesCientificos(response.data.items) // items contém os nomes científicos
-      setTotalPages(response.data.pagination.totalPages)
+      setNomesCientificos(response.data.items)
+      setTotalItems(response.data.pagination.total)
     } catch (err) {
       toastr.error('Erro ao carregar nomes científicos')
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }, [page, limitPerPage, searchTerm, apiurl])
+  }, [page, rowsPerPage, searchTerm, apiurl])
 
   useEffect(() => {
     loadNomesCientificos()
-  }, [page, searchTerm, loadNomesCientificos])
+  }, [page, rowsPerPage, searchTerm, loadNomesCientificos])
 
   const handleChangeNomeCientifico = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNomeCientifico(e.target.value)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (nome === '') {
-      toastr.error('Por favor, insira um nome científico!');
-      return;
-    }
+    e.preventDefault()
   
     if (nome.trim()) {
       try {
@@ -77,30 +72,28 @@ export default function NovoNomeCientifico() {
         toastr.success('Nome científico cadastrado com sucesso!')
         setNomeCientifico('')
         loadNomesCientificos()
-      } catch (err) {
-        if (axios.isAxiosError(err) && err.response) {
-          const errorMessage = err.response.data.error
-          if (errorMessage) {
-            toastr.error(errorMessage+'!')
-          } else {
-            toastr.error('Erro ao cadastrar nome científico!')
-          }
-        } else {
-          toastr.error('Erro ao cadastrar nome científico!')
-        }
+      } catch{
+        toastr.error('Erro ao cadastrar nome científico!')
       } finally {
         setLoading(false)
       }
+    } else {
+      toastr.error('Por favor, insira um nome científico!')
     }
   }
 
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value)
+  const handleChangePage = (_event: unknown, newPage: number) => {
+    setPage(newPage)
+  }
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
   }
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
-    setPage(1) 
+    setPage(0)
   }
 
   return (
@@ -136,7 +129,7 @@ export default function NovoNomeCientifico() {
         </form>
       </Paper>
   
-      <Paper elevation={1} sx={{ paddingX: '10px', borderRadius: '10px', paddingBottom: '10px' }}>
+      <Paper elevation={1} sx={{ paddingX: '10px', borderRadius: '10px' }}>
         <Stack spacing={2}>
           <Typography variant="h6" align="left">
             Lista de Nomes Científicos
@@ -174,25 +167,18 @@ export default function NovoNomeCientifico() {
                   </ListItem>
                 )}
               </List>
-  
-              {totalPages > 1 && (
-                <Pagination
-                  count={totalPages}
-                  page={page}
-                  onChange={handlePageChange}
-                  color="primary"
-                  sx={{
-                    alignSelf: 'center',
-                    '& .MuiPaginationItem-root': {
-                      color: '#656565', 
-                    },
-                    '& .MuiPaginationItem-root.Mui-selected': {
-                      color: 'white', 
-                      backgroundColor: '#98b344',
-                    },
-                  }}
-                />
-              )}
+                <TablePagination
+                className='items-center'
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={totalItems}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                labelRowsPerPage="Nomes por página"
+                labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+              />
             </>
           )}
         </Stack>
