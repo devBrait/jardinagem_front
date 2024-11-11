@@ -1,4 +1,20 @@
-import { Stack, Typography, Paper, FormLabel, TextField, FormControl, InputLabel, Select, MenuItem, Button, List, ListItem, ListItemText, Pagination, CircularProgress } from '@mui/material'
+import { 
+  Stack, 
+  Typography, 
+  Paper, 
+  FormLabel, 
+  TextField, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  Button, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  CircularProgress, 
+  TablePagination 
+} from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
 import { SelectChangeEvent } from '@mui/material'
 import axios from 'axios'
@@ -33,27 +49,26 @@ export default function NovoNomePopular() {
   const [loading, setLoading] = useState(false)
   const [nomeCientificoId, setNomeCientificoId] = useState<number | null>(null)
   const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
-  const [idCounter, setIdCounter] = useState(1)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const limitPerPage = 10 
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
   const apiurl = import.meta.env.VITE_APP_API_URL
 
   const loadNomesCientificos = useCallback(async () => {
     try {
       setLoading(true)
       const response = await axios.get<ApiResponse>(
-        `${apiurl}/nomes-cientificos/cientifico-com-popular?page=${page}&limit=${limitPerPage}`, { withCredentials: true }
+        `${apiurl}/nomes-cientificos/cientifico-com-popular?page=${page + 1}&limit=${rowsPerPage}`, { withCredentials: true }
       )
       setNomesCientificos(response.data.data)
-      setTotalPages(response.data.pagination.totalPages)
+      setTotalItems(response.data.pagination.total)
     } catch (err) {
       toastr.error('Erro ao carregar nomes científicos')
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }, [apiurl, page])
+  }, [apiurl, page, rowsPerPage])
 
   useEffect(() => {
     loadNomesCientificos()
@@ -71,46 +86,33 @@ export default function NovoNomePopular() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if(nomePopular.trim() == '' || nomeCientificoId === null) {
+    if (nomePopular.trim() === '' || nomeCientificoId === null) {
       toastr.error('Preencha todos os campos')
       return
     }
 
-    if (nomePopular.trim() && nomeCientificoId !== null) {
-      const index = nomesCientificos.findIndex((n) => n.id === nomeCientificoId)
-      if (index !== -1) {
-        try{
-          setLoading(true)
-          const updatedNomesCientificos = [...nomesCientificos]
-          await axios.post(`${apiurl}/nomes-populares`, { nome: nomePopular, idNomeCientifico: nomeCientificoId }, { withCredentials: true })
-          toastr.success('Nome popular cadastrado com sucesso!')
-          updatedNomesCientificos[index].nomesPopulares.push({ id: idCounter, nome: nomePopular })
-          setNomesCientificos(updatedNomesCientificos)
-          setIdCounter(idCounter + 1)
-          setNomePopular('')
-          setNomeCientificoId(null)
-      }catch(err){
-        if (axios.isAxiosError(err) && err.response) {
-          const errorMessage = err.response.data.error
-          if (errorMessage) {
-            toastr.error(errorMessage+'!')
-          } else {
-            console.log(err.message)
-            console.log('aqui')
-            toastr.error('Erro ao cadastrar nome popular!')
-          }
-        } else {
-          toastr.error('Erro ao cadastrar nome popular!')
-        }
-      }finally {
-        setLoading(false)
-      }
-    }
+    try {
+      setLoading(true)
+      await axios.post(`${apiurl}/nomes-populares`, { nome: nomePopular, idNomeCientifico: nomeCientificoId }, { withCredentials: true })
+      toastr.success('Nome popular cadastrado com sucesso!')
+      loadNomesCientificos()
+      setNomePopular('')
+      setNomeCientificoId(null)
+    } catch (err) {
+      toastr.error('Erro ao cadastrar nome popular!')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleChangePage = (_event: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value)
+  const handleChangePage = (_event: unknown, newPage: number) => {
+    setPage(newPage)
+  }
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0) 
   }
 
   return (
@@ -155,7 +157,7 @@ export default function NovoNomePopular() {
         </form>
       </Paper>
 
-      <Paper elevation={1} sx={{ padding: '20px', borderRadius: '10px' }}>
+      <Paper elevation={1} sx={{ paddingX: '20px', borderRadius: '10px' }}>
         <Typography variant="h6" align="left">
           Lista de Nomes Populares
         </Typography>
@@ -183,24 +185,16 @@ export default function NovoNomePopular() {
             ))}
           </List>
         )}
-        <Pagination
-          count={totalPages}
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={totalItems}
+          rowsPerPage={rowsPerPage}
           page={page}
-          onChange={handleChangePage}
-          color="primary"
-          sx={{
-            marginTop: '20px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignSelf: 'center',
-            '& .MuiPaginationItem-root': {
-              color: '#656565', 
-            },
-            '& .MuiPaginationItem-root.Mui-selected': {
-              color: 'white', 
-              backgroundColor: '#98b344',
-            },
-          }}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Nomes por página"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
         />
       </Paper>
     </Stack>
