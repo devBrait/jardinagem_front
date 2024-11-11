@@ -22,6 +22,7 @@ import MenuIcon from "@mui/icons-material/Menu"
 import { useNavigate } from "react-router-dom"
 import AddIcon from "@mui/icons-material/Add"
 import { useAuth } from "../../AuthContext"
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'
 
 export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -413,7 +414,7 @@ export default function Navbar() {
               "&:hover": { backgroundColor: "#7a9244" }
             }}
           >
-            <AddIcon />
+          {user.tipoUsuario === 'cliente' ? <AddShoppingCartIcon/> : <AddIcon/>}
           </Fab>
         </Tooltip>
         

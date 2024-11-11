@@ -1,55 +1,116 @@
-import { Stack, Typography, Paper, FormLabel, TextField, FormControl, InputLabel, Select, MenuItem, Button, List, ListItem, ListItemText } from '@mui/material'
-import { useState } from 'react'
+import { Stack, Typography, Paper, FormLabel, TextField, FormControl, InputLabel, Select, MenuItem, Button, List, ListItem, ListItemText, Pagination, CircularProgress } from '@mui/material'
+import { useCallback, useEffect, useState } from 'react'
 import { SelectChangeEvent } from '@mui/material'
+import axios from 'axios'
+import toastr from 'toastr'
 
 interface NomePopular {
   id: number
-  nomePopular: string
+  nome: string
 }
 
 interface NomeCientifico {
   id: number
-  nomeCientifico: string
+  nome: string
   nomesPopulares: NomePopular[]
+}
+
+interface ApiResponse {
+  success: boolean
+  data: NomeCientifico[]
+  pagination: {
+    total: number
+    totalPages: number
+    currentPage: number
+    itemsPerPage: number
+    hasNext: boolean
+    hasPrevious: boolean
+  }
 }
 
 export default function NovoNomePopular() {
   const [nomePopular, setNomePopular] = useState('')
-  const [nomeCientificoId, setNomeCientificoId] = useState<number | ''>('')
-  const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([
-    { id: 1, nomeCientifico: 'Rosa rubiginosa', nomesPopulares: [] },
-    { id: 2, nomeCientifico: 'Cactaceae', nomesPopulares: [] },
-    { id: 3, nomeCientifico: 'Ficus elastica', nomesPopulares: [] },
-  ])
+  const [loading, setLoading] = useState(false)
+  const [nomeCientificoId, setNomeCientificoId] = useState<number | null>(null)
+  const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
   const [idCounter, setIdCounter] = useState(1)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const limitPerPage = 10 
+  const apiurl = import.meta.env.VITE_APP_API_URL
+
+  const loadNomesCientificos = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await axios.get<ApiResponse>(
+        `${apiurl}/nomes-cientificos/cientifico-com-popular?page=${page}&limit=${limitPerPage}`, { withCredentials: true }
+      )
+      setNomesCientificos(response.data.data)
+      setTotalPages(response.data.pagination.totalPages)
+    } catch (err) {
+      toastr.error('Erro ao carregar nomes científicos')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [apiurl, page])
+
+  useEffect(() => {
+    loadNomesCientificos()
+  }, [loadNomesCientificos])
 
   const handleChangeNomePopular = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNomePopular(e.target.value)
   }
 
-  const handleChangeNomeCientifico = (e: SelectChangeEvent<number | ''>) => {
-    const value = e.target.value
+  const handleChangeNomeCientifico = (e: SelectChangeEvent<number | null>) => {
+    const value = e.target.value as number | null
+    setNomeCientificoId(value)
+  }
 
-    if (value === '') {
-      setNomeCientificoId('')
-    } else {
-      setNomeCientificoId(Number(value))
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if(nomePopular.trim() == '' || nomeCientificoId === null) {
+      toastr.error('Preencha todos os campos')
+      return
+    }
+
+    if (nomePopular.trim() && nomeCientificoId !== null) {
+      const index = nomesCientificos.findIndex((n) => n.id === nomeCientificoId)
+      if (index !== -1) {
+        try{
+          setLoading(true)
+          const updatedNomesCientificos = [...nomesCientificos]
+          await axios.post(`${apiurl}/nomes-populares`, { nome: nomePopular, idNomeCientifico: nomeCientificoId }, { withCredentials: true })
+          toastr.success('Nome popular cadastrado com sucesso!')
+          updatedNomesCientificos[index].nomesPopulares.push({ id: idCounter, nome: nomePopular })
+          setNomesCientificos(updatedNomesCientificos)
+          setIdCounter(idCounter + 1)
+          setNomePopular('')
+          setNomeCientificoId(null)
+      }catch(err){
+        if (axios.isAxiosError(err) && err.response) {
+          const errorMessage = err.response.data.error
+          if (errorMessage) {
+            toastr.error(errorMessage+'!')
+          } else {
+            console.log(err.message)
+            console.log('aqui')
+            toastr.error('Erro ao cadastrar nome popular!')
+          }
+        } else {
+          toastr.error('Erro ao cadastrar nome popular!')
+        }
+      }finally {
+        setLoading(false)
+      }
+    }
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (nomePopular.trim() && nomeCientificoId) {
-      const index = nomesCientificos.findIndex((n) => n.id === nomeCientificoId)
-      if (index !== -1) {
-        const updatedNomesCientificos = [...nomesCientificos]
-        updatedNomesCientificos[index].nomesPopulares.push({ id: idCounter, nomePopular })
-        setNomesCientificos(updatedNomesCientificos)
-        setIdCounter(idCounter + 1)
-        setNomePopular('')
-        setNomeCientificoId('')
-      }
-    }
+  const handleChangePage = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value)
   }
 
   return (
@@ -73,22 +134,21 @@ export default function NovoNomePopular() {
               <InputLabel id="nomeCientifico-label">Nome Científico</InputLabel>
               <Select
                 labelId="nomeCientifico-label"
-                value={nomeCientificoId}
+                value={nomeCientificoId ?? ''}
                 onChange={handleChangeNomeCientifico}
                 label="Nome Científico"
               >
                 <MenuItem value="">
                   <em>Selecione um nome científico</em>
                 </MenuItem>
-                {nomesCientificos.map((nome) => (
-                  <MenuItem key={nome.id} value={nome.id}>
-                    {nome.nomeCientifico}
+                {nomesCientificos.map((lstNomes) => (
+                  <MenuItem key={lstNomes.id} value={lstNomes.id}>
+                    {lstNomes.nome}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-
-            <Button variant="contained" type="submit" className='bg-verde_claro' fullWidth sx={{ height: '40px' }}>
+            <Button variant="contained" type="submit" fullWidth sx={{ height: '40px' }}>
               Cadastrar
             </Button>
           </Stack>
@@ -99,28 +159,49 @@ export default function NovoNomePopular() {
         <Typography variant="h6" align="left">
           Lista de Nomes Populares
         </Typography>
-        <List>
-          {nomesCientificos.map((nomeCientifico) => (
-            <div key={nomeCientifico.id}>
-              <ListItem>
-                <ListItemText primary={<Typography fontWeight="bold">
-        {nomeCientifico.nomeCientifico}
-      </Typography>} />
-              </ListItem>
-              {nomeCientifico.nomesPopulares.length > 0 ? (
-                nomeCientifico.nomesPopulares.map((nomePopular) => (
-                  <ListItem key={nomePopular.id}>
-                    <ListItemText primary={`- ${nomePopular.nomePopular}`} />
-                  </ListItem>
-                ))
-              ) : (
+        {loading ? (
+          <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
+        ) : (
+          <List>
+            {nomesCientificos.map((lstNomes) => (
+              <div key={lstNomes.id}>
                 <ListItem>
-                  <ListItemText primary="Nenhum nome popular cadastrado." />
+                  <ListItemText primary={<Typography fontWeight="bold">{lstNomes.nome}</Typography>} />
                 </ListItem>
-              )}
-            </div>
-          ))}
-        </List>
+                {lstNomes.nomesPopulares.length > 0 ? (
+                  lstNomes.nomesPopulares.map((nomePopular) => (
+                    <ListItem key={nomePopular.id}>
+                      <ListItemText primary={`- ${nomePopular.nome}`} />
+                    </ListItem>
+                  ))
+                ) : (
+                  <ListItem>
+                    <ListItemText primary="Nenhum nome popular cadastrado." />
+                  </ListItem>
+                )}
+              </div>
+            ))}
+          </List>
+        )}
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={handleChangePage}
+          color="primary"
+          sx={{
+            marginTop: '20px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignSelf: 'center',
+            '& .MuiPaginationItem-root': {
+              color: '#656565', 
+            },
+            '& .MuiPaginationItem-root.Mui-selected': {
+              color: 'white', 
+              backgroundColor: '#98b344',
+            },
+          }}
+        />
       </Paper>
     </Stack>
   )
