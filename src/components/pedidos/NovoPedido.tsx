@@ -221,6 +221,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
       const reader = new FileReader()
       reader.onloadend = () => {
         setCapturedImage(reader.result as string)
+        console.log(capturedImage)
       }
       reader.readAsDataURL(file)
     }
