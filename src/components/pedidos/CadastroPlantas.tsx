@@ -31,7 +31,9 @@ import axios from "axios"
 
 interface FormData {
   nome_cientifico: string
+  id_nome_cientifico: number
   nome_popular: string
+  id_nome_popular: number
   altura_max: number
   preco: string
   floracao: string
@@ -66,7 +68,9 @@ interface ApiResponse {
 export default function CadastroPlantas(props: { disableCustomTheme?: boolean }) {
   const [formData, setFormData] = useState<FormData>({
     nome_cientifico: '',
+    id_nome_cientifico: 0,
     nome_popular: '',
+    id_nome_popular: 0,
     altura_max: 0,
     preco: '',
     floracao: '',
@@ -191,7 +195,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     }))
   }
 
-  const validaNomePopular = (nomePopular: string) => {
+  const validaNomePopular = (nomePopular: string): boolean => {
   
       const nomeEncontrado = nomesPopulares.find(
         (item) => item.nome.toLowerCase() === nomePopular.toLowerCase()
@@ -201,44 +205,76 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         const nomeCientificoEncontrado = nomesCientificos.find(
           (item) => item.id === nomeEncontrado.id
         )
-        console.log(nomeCientificoEncontrado)
         if (nomeCientificoEncontrado) {
-          setFormData({ ...formData, nome_cientifico: nomeCientificoEncontrado.nome })
+          setFormData({ ...formData, nome_cientifico: nomeCientificoEncontrado.nome, 
+            id_nome_cientifico: nomeCientificoEncontrado.id, id_nome_popular: nomeEncontrado.id })
+            return true
         } else {
           toastr.error('Nome científico não encontrado no sistema.')
+          return false
         }
       } else {
         toastr.error('Nome popular não encontrado no sistema.')
+        return false
       }
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>)  => {
     event.preventDefault()
-    validateInputs()
-    setPlants((prevPlants) => [
-      ...prevPlants,
-      { ...formData, status: "Disponível" },
-    ])
-    setFormData({
-      nome_cientifico: '',
-      nome_popular: '',
-      altura_max: 0,
-      preco: '',
-      floracao: '',
-      tamanho: 0,
-      cor_folhagem: '',
-      imagem: null,
-      porte: '',
-      quantidade: 0,
-    })
+    const novaPlanta = {
+      idFornecedor: user?.id,
+      idNomeCientifico: formData.id_nome_cientifico, 
+      idNomePopular: formData.id_nome_popular,
+      topiaria: formData.floracao,
+      cor_floracao: formData.cor_folhagem,
+      altura_total: formData.altura_max,
+      porte: formData.porte,
+      preco: parseFloat(formData.preco),
+      quantidade: formData.quantidade,
+    }
+
+    if(!validateInputs())
+    {
+      return
+    }
+
+    try
+    {
+      await axios.post(`${apiurl}/plantas/cadastro-planta`, novaPlanta, {withCredentials: true})
+      toastr.success('Nome científico cadastrado com sucesso!')
+
+      setPlants((prevPlants) => [
+        ...prevPlants,
+        { ...formData, status: "Disponível" },
+      ])
+      setFormData({
+        nome_cientifico: '',
+        id_nome_cientifico: 0,
+        nome_popular: '',
+        id_nome_popular: 0,
+        altura_max: 0,
+        preco: '',
+        floracao: '',
+        tamanho: 0,
+        cor_folhagem: '',
+        imagem: null,
+        porte: '',
+        quantidade: 0,
+      })
+    }catch
+    {
+      toastr.error('Erro ao cadastrar planta!')
+    }
   }
 
-  const validateInputs = () => {
+  const validateInputs = (): boolean => {
     const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
 
     if (formData.nome_popular !== '') {
-      validaNomePopular(formData.nome_popular)
-      return
+      if(validaNomePopular(formData.nome_popular)) {
+        return true
+      }
+      return false
     }
 
 
@@ -247,18 +283,25 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
       || formData.tamanho <= 0 || formData.cor_folhagem === '' || formData.porte === '' 
       || formData.quantidade <= 0) {
       toastr.error('Todos os campos devem ser preenchidos.')
-      return
+      return false
     }
 
     if(formData.floracao != 'Sim' && formData.floracao != 'Não') {
       toastr.error('A floracao deve ser Sim ou Não.')
-      return
+      return false
     }
 
     if (!formatoPreco.test(formData.preco)) {
       toastr.error('O preço deve ser um valor válido em reais, como 1000,00.')
-      return
+      return false
     }
+
+    if(formData.porte !== 'Pequeno' && formData.porte !== 'Médio' && formData.porte !== 'Grande') {
+      toastr.error('O porte deve ser Pequeno, Médio ou Grande.')
+      return false
+    }
+
+    return true
   }
 
   const displayedPlants = plants.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -290,7 +333,8 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 variant="outlined"
               />
             </Stack>
-            <Stack spacing={1} sx={{ flex: 1 }}>
+            {/* Campo oculto para armazenar o nome científico - não utilizado no momento */}
+            <Stack hidden={true} spacing={1} sx={{ flex: 1 }}>
               <FormLabel htmlFor="nome_cientifico">Nome científico</FormLabel>
               <TextField
                 fullWidth
@@ -320,7 +364,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
               <TextField
                 fullWidth
                 placeholder="Digite a cor da folhagem"
-                name="cor_folagem"
+                name="cor_folhagem"
                 value={formData.cor_folhagem}
                 onChange={handleChange}
                 variant="outlined"
@@ -387,12 +431,14 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
               />
             </Stack>
           </Stack>
-          <FormLabel htmlFor="imagem">Imagem ou arquivo CSV (opcional)</FormLabel>
+          {/* Campo oculto para armazenar documento csv - não utilizado no momento */}
+          <FormLabel hidden={true} htmlFor="imagem">Imagem ou arquivo CSV (opcional)</FormLabel>
           <input
             type="file"
             name="imagem"
             accept="image/*,.csv"
             capture={isMobile ? "environment" : undefined}
+            hidden={true}
             onChange={(event) => {
               if (event.target.files && event.target.files[0]) {
                 setFormData((prevState) => ({
