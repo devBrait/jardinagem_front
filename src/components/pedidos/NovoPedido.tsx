@@ -14,7 +14,9 @@ import {
 } from '@mui/material'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
+/*
 import CameraAltIcon from '@mui/icons-material/CameraAlt'
+*/
 import { useAuth } from '../../AuthContext'
 import Loading from '../loading/Loading'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -35,7 +37,9 @@ interface FormData {
 }
 
 export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
+  /* Variáveis de Estado para captura de imagem
   const [capturedImage, setCapturedImage] = useState('')
+  */
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const navigate = useNavigate()
@@ -215,6 +219,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     setFormData({ ...formData, itens: newItens })
   }
 
+  /* Trecho de código para capturar imagem, para futuro reconhecimento de plantas
   const capturaImagem = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -225,7 +230,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
       }
       reader.readAsDataURL(file)
     }
-  }
+  } */
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault()
@@ -302,8 +307,8 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
             </Stack>
 
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6">Adicionar itens</Typography>
-              <Button
+              <Typography variant="h6">Adicionar itens</Typography>        
+              {/* <Button
                 className="bg-verde_claro text-white"
                 sx={{ textTransform: 'none'}}
                 component="label"
@@ -317,7 +322,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
                   onChange={capturaImagem}
                   style={{ display: 'none' }}
                 />
-            </Button>
+            </Button> */}
             </Stack>
             <>
                 {formData.itens.map((item, index) => (

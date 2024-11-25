@@ -101,7 +101,6 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
   const verificaConta = async (url: string, email: string, senha: string) => {
     try {
       const response = await axios.post(url, { email, senha }, { withCredentials: true });
-  
       if (response.status !== 200){
         return false
       }
@@ -144,9 +143,10 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
 
       if(email === admin && password === password_admin){
         const data = await verificaConta(`${apiurl}/admin/login`, email, password)
+        console.log(data)
         if (data) {
           toastr.success('Administrador logado com sucesso!')
-          const userData = { email: email, tipoUsuario: 'admin', ativo: true }
+          const userData = { id: 0, email: email, tipoUsuario: 'admin', ativo: true }
           login(userData)
           navigate('/dashboard-admin')
           return
@@ -156,7 +156,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
       data = await verificaConta(`${apiurl}/clientes/login`, email, password)
       if (data) {
         toastr.success('Usuário logado com sucesso!')
-        const userData = { email: email, tipoUsuario: 'cliente', ativo: data.ativo } 
+        const userData = { id: data.id, email: email, tipoUsuario: 'cliente', ativo: data.ativo } 
         login(userData)
         navigate('/dashboard-cliente')
         return
@@ -164,7 +164,7 @@ export default function  SignIn(props: { disableCustomTheme?: boolean }) {
        data = await verificaConta(`${apiurl}/fornecedores/login`, email, password)
        if (data) {
          toastr.success('Usuário logado com sucesso!')
-         const userData = { email: email, tipoUsuario: 'fornecedor', ativo: data.ativo } 
+         const userData = { id: data.id, email: email, tipoUsuario: 'fornecedor', ativo: data.ativo } 
          login(userData)
          navigate('/dashboard-fornecedor')
          return

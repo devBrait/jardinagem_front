@@ -255,7 +255,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         data = await cadastraConta(url, dadosUsuario)
         if (data) {
           toastr.success('Usuário cadastrado com sucesso!')
-          const userData = { email: email, tipoUsuario: 'cliente', ativo: true }
+          const userData = { id: data.id, email: email, tipoUsuario: 'cliente', ativo: true }
           login(userData) 
           navigate('/dashboard-cliente')
         }
@@ -274,7 +274,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
         data = await cadastraConta(url, dadosUsuario)
         if (data) {
           toastr.success('Usuário cadastrado com sucesso!')
-          const userData = { email: email, tipoUsuario: 'fornecedor', ativo: true }
+          const userData = { id: data.id, email: email, tipoUsuario: 'fornecedor', ativo: true }
           login(userData)
           navigate('/dashboard-fornecedor')
         }

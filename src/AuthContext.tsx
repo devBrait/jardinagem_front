@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import {jwtDecode} from 'jwt-decode'
 import axios from 'axios'
 interface User {
+  id: number
   email: string
   tipoUsuario: string
   ativo: boolean
@@ -33,7 +34,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (token) {
       try {
         const decoded = jwtDecode(token) as { id: number, email: string, tipoUsuario: string, ativo: boolean }
-        setUser({ email: decoded.email, tipoUsuario: decoded.tipoUsuario, ativo: decoded.ativo })
+        setUser({ id: decoded.id, email: decoded.email, tipoUsuario: decoded.tipoUsuario, ativo: decoded.ativo })
       } catch (error) {
         console.error("Erro ao decodificar token:", error)
         setUser(null)
