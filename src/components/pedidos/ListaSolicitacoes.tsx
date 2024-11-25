@@ -16,7 +16,7 @@ export default function ListaSolicitacoes({ handleCadastroPlantaClick }: { handl
       floracao: string
       cor_folhagem: string
       porte: string
-      preco: string
+      preco: number
       status: string
     }
 
@@ -31,12 +31,12 @@ export default function ListaSolicitacoes({ handleCadastroPlantaClick }: { handl
 
   const loadSolicitacoes = useCallback(async () => {
     if (!user?.id) {
-      toastr.error('Usuário não identificado.');
-      return;
+      toastr.error('Usuário não identificado.')
+      return
     }
   
     try {
-      setCarregando(true);
+      setCarregando(true)
   
       const response = await axios.get(`${apiurl}/pedidos/getAll/${user.id}`, {
         withCredentials: true,

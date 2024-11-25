@@ -69,7 +69,7 @@ interface Plantas {
   alturar_total: number
   quantidade: number
   ativo: boolean
-  preco: number
+  preco: number // número float
 }
 
 
@@ -154,7 +154,10 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         altura_total: planta.alturar_total,
         quantidade: planta.quantidade,
         ativo: planta.ativo,
-        preco: planta.preco,
+        preco: planta.preco.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2, // Garante 2 casas decimais
+          maximumFractionDigits: 2 // Limita a 2 casas decimais
+        }),
       }))
       setPlantas(plantas)
 
@@ -277,7 +280,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
       cor_floracao: formData.cor_folhagem,
       altura_total: formData.altura_max,
       porte: formData.porte,
-      preco: parseFloat(formData.preco),
+      preco: parseFloat(formData.preco.replace(',', '.')),
       quantidade: formData.quantidade
     }
   
