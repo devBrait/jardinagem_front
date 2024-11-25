@@ -159,9 +159,11 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
           maximumFractionDigits: 2 // Limita a 2 casas decimais
         }),
       }))
+      console.log(plantas)
       setPlantas(plantas)
 
-    } catch{
+    } catch(error){
+      console.log(error)
       toastr.error('Erro ao carregar nomes científicos.')
     } finally {
       setCarregando(false)
