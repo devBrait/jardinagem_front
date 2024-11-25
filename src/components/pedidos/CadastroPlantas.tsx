@@ -42,6 +42,7 @@ interface FormData {
   imagem: File | null
   porte: string
   quantidade: number 
+  ativo: boolean
 }
 
 interface NomePopular {
@@ -55,6 +56,22 @@ interface NomeCientifico {
   nome: string
   nomesPopulares: NomePopular[]
 }
+
+interface Plantas {
+  id: number
+  idNomeCientifico: number
+  nome_cientifico: string
+  idNomePopular: number
+  nome_popular: string
+  cor_floracao: string
+  porte: string
+  topiaria: string
+  alturar_total: number
+  quantidade: number
+  ativo: boolean
+  preco: number
+}
+
 
 interface ApiResponse {
   data: NomeCientifico[]
@@ -79,16 +96,10 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     imagem: null,
     porte: '',
     quantidade: 0,
+    ativo: true,
   })
 
-  const [plants, setPlants] = useState([
-    { nome_cientifico: "Rosa", nome_popular: "Rosa", floracao: "Sim", cor_folhagem: "Verde", quantidade: 5, preco: "30,00", status: "Disponível" },
-    { nome_cientifico: "Hydrangea", nome_popular: "Hortência", floracao: "Sim", cor_folhagem: "Verde", quantidade: 5, preco: "24,99", status: "Disponível" },
-    { nome_cientifico: "Epipremnum pinnatum", nome_popular: "Jibóia", floracao: "Não", cor_folhagem: "Verde", quantidade: 0, preco: "30", status: "Indisponível" },
-    { nome_cientifico: "Helianthus annuus", nome_popular: "Girassol", floracao: "Sim", cor_folhagem: "Verde", quantidade: 5, preco: "30", status: "Disponível" },
-    { nome_cientifico: "Helianthus annuus", nome_popular: "Girassol", floracao: "Sim", cor_folhagem: "Verde", quantidade: 5, preco: "30", status: "Disponível" },
-    { nome_cientifico: "Helianthus annuus", nome_popular: "Girassol", floracao: "Sim", cor_folhagem: "Verde", quantidade: 5, preco: "30", status: "Disponível" },
-  ])
+  const [plantas, setPlantas] = useState([] as Plantas[])
   const [page, setPage] = useState(0) 
   const [rowsPerPage, setRowsPerPage] = useState(5) 
   const isMobile = window.innerWidth < 600 
@@ -108,6 +119,9 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
       const response = await axios.get<ApiResponse>(
         `${apiurl}/nomes-cientificos/cientifico-com-popular-sem-paginacao`, {withCredentials: true}
       )
+
+      const responsePlantas = await axios.get(`${apiurl}/plantas/fornecedor/${user?.id}`, {withCredentials: true})
+
       const nomesPopulares = response.data.data
       .flatMap((nomeCientifico: NomeCientifico) =>
         nomeCientifico.nomesPopulares.map((nomePopular: NomePopular) => ({
@@ -125,12 +139,31 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         nomesPopulares: nomeCientifico.nomesPopulares,
       }))
       setNomesCientificos(nomesCientificos)
+      
+      const plantas = responsePlantas.data.data.map((planta: Plantas) => ({
+        id: planta.id,
+        nome_cientifico: nomesCientificos.find(
+          (nomeCientifico) => nomeCientifico.id === planta.idNomeCientifico
+        )?.nome || '',
+        nome_popular: nomesPopulares.find(
+          (nomePopular) => nomePopular.id === planta.idNomePopular
+        )?.nome || '',
+        cor_floracao: planta.cor_floracao,
+        porte: planta.porte,
+        topiaria: planta.topiaria,
+        altura_total: planta.alturar_total,
+        quantidade: planta.quantidade,
+        ativo: planta.ativo,
+        preco: planta.preco,
+      }))
+      setPlantas(plantas)
+
     } catch{
       toastr.error('Erro ao carregar nomes científicos.')
     } finally {
       setCarregando(false)
     }
-  }, [apiurl])
+  }, [apiurl, user?.id])
 
   useEffect(() => {
     loadNomesPlantas()
@@ -196,57 +229,64 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   }
 
   const validaNomePopular = (nomePopular: string): boolean => {
+    const nomeEncontrado = nomesPopulares.find(
+      (item) => item.nome.toLowerCase() === nomePopular.toLowerCase()
+    )
   
-      const nomeEncontrado = nomesPopulares.find(
-        (item) => item.nome.toLowerCase() === nomePopular.toLowerCase()
+    if (nomeEncontrado) {
+      const nomeCientificoEncontrado = nomesCientificos.find(
+        (item) => item.id === nomeEncontrado.id
       )
   
-      if (nomeEncontrado) {
-        const nomeCientificoEncontrado = nomesCientificos.find(
-          (item) => item.id === nomeEncontrado.id
-        )
-        if (nomeCientificoEncontrado) {
-          setFormData({ ...formData, nome_cientifico: nomeCientificoEncontrado.nome, 
-            id_nome_cientifico: nomeCientificoEncontrado.id, id_nome_popular: nomeEncontrado.id })
-            return true
-        } else {
-          toastr.error('Nome científico não encontrado no sistema.')
-          return false
-        }
+      if (nomeCientificoEncontrado) {
+        // Atualiza formData usando a função assíncrona de atualização
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          nome_cientifico: nomeCientificoEncontrado.nome,
+          id_nome_cientifico: nomeCientificoEncontrado.id,
+          id_nome_popular: nomeEncontrado.id
+        }))
+        return true
       } else {
-        toastr.error('Nome popular não encontrado no sistema.')
+        toastr.error('Nome científico não encontrado no sistema.')
         return false
       }
+    } else {
+      toastr.error('Nome popular não encontrado no sistema.')
+      return false
+    }
   }
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>)  => {
+  
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+  
+    if (!validateInputs()) {
+      return
+    }
+
+    const validNomePopular = validaNomePopular(formData.nome_popular)
+    if (!validNomePopular) {
+      return
+    }
+  
     const novaPlanta = {
       idFornecedor: user?.id,
-      idNomeCientifico: formData.id_nome_cientifico, 
+      idNomeCientifico: formData.id_nome_cientifico,
       idNomePopular: formData.id_nome_popular,
       topiaria: formData.floracao,
       cor_floracao: formData.cor_folhagem,
       altura_total: formData.altura_max,
       porte: formData.porte,
       preco: parseFloat(formData.preco),
-      quantidade: formData.quantidade,
+      quantidade: formData.quantidade
     }
-
-    if(!validateInputs())
-    {
-      return
-    }
-
-    try
-    {
-      await axios.post(`${apiurl}/plantas/cadastro-planta`, novaPlanta, {withCredentials: true})
-      toastr.success('Nome científico cadastrado com sucesso!')
-
-      setPlants((prevPlants) => [
-        ...prevPlants,
-        { ...formData, status: "Disponível" },
-      ])
+  
+    try {
+      await axios.post(`${apiurl}/plantas/cadastro-planta`, novaPlanta, { withCredentials: true })
+      toastr.success('Planta cadastrada com sucesso!')
+      loadNomesPlantas()
+  
+      // Limpa o formulário após o envio
       setFormData({
         nome_cientifico: '',
         id_nome_cientifico: 0,
@@ -260,51 +300,53 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         imagem: null,
         porte: '',
         quantidade: 0,
+        ativo: true
       })
-    }catch
-    {
+    } catch {
       toastr.error('Erro ao cadastrar planta!')
     }
   }
-
+  
   const validateInputs = (): boolean => {
     const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
-
+  
+    // Valida o nome popular e científico
     if (formData.nome_popular !== '') {
-      if(validaNomePopular(formData.nome_popular)) {
-        return true
+      if (!validaNomePopular(formData.nome_popular)) {
+        return false
       }
-      return false
     }
-
-
-    if(formData.nome_popular === '' || formData.nome_cientifico === '' 
+  
+    // Valida os campos restantes
+    if (formData.nome_popular === '' || formData.nome_cientifico === '' 
       || formData.altura_max <= 0 || formData.preco === '' || formData.floracao === '' 
       || formData.tamanho <= 0 || formData.cor_folhagem === '' || formData.porte === '' 
       || formData.quantidade <= 0) {
       toastr.error('Todos os campos devem ser preenchidos.')
       return false
     }
-
-    if(formData.floracao != 'Sim' && formData.floracao != 'Não') {
+  
+    // Valida a floracao (Sim/Não)
+    if (formData.floracao !== 'Sim' && formData.floracao !== 'Não') {
       toastr.error('A floracao deve ser Sim ou Não.')
       return false
     }
-
+  
+    // Valida o formato do preço
     if (!formatoPreco.test(formData.preco)) {
       toastr.error('O preço deve ser um valor válido em reais, como 1000,00.')
       return false
     }
-
-    if(formData.porte !== 'Pequeno' && formData.porte !== 'Médio' && formData.porte !== 'Grande') {
+  
+    // Valida o porte da planta
+    if (formData.porte !== 'Pequeno' && formData.porte !== 'Médio' && formData.porte !== 'Grande') {
       toastr.error('O porte deve ser Pequeno, Médio ou Grande.')
       return false
     }
-
+  
     return true
-  }
-
-  const displayedPlants = plants.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  }  
+  const displayedPlants = plantas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 
   const Content = (
     <Stack spacing={4} sx={{ maxWidth: "100%", mx: 'auto', mt: "15px", minHeight: '100vh', paddingBottom: '20px' }}>
@@ -480,12 +522,18 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedPlants.map((planta, index) => (
+            {displayedPlants.length === 0 ? (
+               <TableRow>
+               <TableCell colSpan={8} align="center">
+                 Você não tem nenhuma planta cadastrada ainda.
+               </TableCell>
+             </TableRow>
+            ) : ( displayedPlants.map((planta, index) => (
               <TableRow key={index}>
                 <TableCell>{planta.nome_cientifico}</TableCell>
                 <TableCell>{planta.nome_popular}</TableCell>
-                <TableCell>{planta.floracao}</TableCell>
-                <TableCell>{planta.cor_folhagem}</TableCell>
+                <TableCell>{planta.topiaria.toLocaleUpperCase()}</TableCell>
+                <TableCell>{planta.cor_floracao}</TableCell>
                 <TableCell>{planta.quantidade}</TableCell>
                 <TableCell>R$ {planta.preco}</TableCell>
                 <TableCell>
@@ -495,7 +543,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      backgroundColor: planta.status === 'Disponível' ? '#98b344' : '#e95a5a',
+                      backgroundColor: planta.ativo ===  true ? '#98b344' : '#e95a5a',
                       color: 'white',
                       padding: '4px 8px',
                       borderRadius: '6px',
@@ -504,7 +552,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                       textAlign: 'center',
                     }}
                   >
-                    {planta.status}
+                    {planta.ativo === true ? 'Disponível' : 'Indisponível'}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -513,14 +561,14 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                   </IconButton>
                 </TableCell>
               </TableRow>
-            ))}
+            )))}
           </TableBody>
         </Table>
       </TableContainer>
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={plants.length} 
+        count={plantas.length} 
         rowsPerPage={rowsPerPage}
         labelRowsPerPage="Plantas por página"
         page={page} 
@@ -533,7 +581,9 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   )
 
   return carregando ? (
-    <CircularProgress /> 
+    <div className="flex items-center justify-center h-screen">
+      <CircularProgress />
+    </div>
   ) : user?.ativo ? (
     acessoPelaRota ? (
       <AppTheme {...props}>
