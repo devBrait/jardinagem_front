@@ -11,6 +11,7 @@ import {
   Container,
   CssBaseline,
   Box,
+  Autocomplete,
 } from '@mui/material'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
@@ -25,6 +26,7 @@ import AppTheme from '../../css/theme/AppTheme'
 import axios from 'axios'
 import toastr from 'toastr'
 import WarningIcon from '@mui/icons-material/Warning'
+
 interface FormData {
   cep: string
   enderecoEntrega: string
@@ -33,7 +35,13 @@ interface FormData {
   estado: string
   observacoes: string
   arquivo: File | null
-  itens: { nome: string; quantidade: string }[]
+  itens: { id: number, nome: string; quantidade: number }[]
+}
+
+interface Plantas {
+  id: number
+  nome: string
+  idNomeCientifico: number
 }
 
 export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
@@ -42,6 +50,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
   */
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
+  const [plantas, setPlantas] = useState([] as Plantas[])
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/realiza-pedido'
@@ -76,7 +85,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     estado: '',
     observacoes: '',
     arquivo: null,
-    itens: [{ nome: '', quantidade: '' }],
+    itens: [{ id: 0, nome: '', quantidade: 0 }],
   })
 
   useEffect(() => {
@@ -88,6 +97,12 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
           withCredentials: true,
         })
 
+        const responsePlantas = await axios.get(`${apiurl}/nomes-populares`, {withCredentials: true})
+        
+
+        // Ensure responsePlantas.data is an array
+        const plantasData = responsePlantas.data.data
+
         if (response.data.success) {
           const dadosCliente = {
             nome: response.data.cliente.nome,
@@ -95,13 +110,17 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
             email: response.data.cliente.email,
             telefone: response.data.cliente.telefone,
             cep: response.data.cliente.CEP,
-          };
+          }
+
+          // Carrega todos os nomes populares das plantas
+          setPlantas(plantasData)
 
           // Atualiza o estado do formData com o CEP carregado inicialmente
           setFormData((prevData) => ({
             ...prevData,
             cep: dadosCliente.cep,
           }))
+
           // Chamada para buscar o endereço usando o CEP
           await fetchEnderecoData(dadosCliente.cep)
         } else {
@@ -201,21 +220,33 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
 
 
   const handleItemChange = (index: number, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = event.target
-    const newItens = [...formData.itens]
-    newItens[index] = { ...newItens[index], [name]: value }
-    setFormData({ ...formData, itens: newItens })
-  }
+    const { name, value } = event.target;
+    const newItens = [...formData.itens];
+  
+    // Converter o valor de quantidade para número
+    newItens[index] = { 
+      ...newItens[index], 
+      [name]: name === 'quantidade' ? Number(value) : value 
+    }
+  
+    setFormData({ ...formData, itens: newItens });
+  };
+  
 
   const handleAddItem = () => {
     setFormData({
       ...formData,
-      itens: [...formData.itens, { nome: '', quantidade: '' }],
+      itens: [...formData.itens, { id: 0, nome: '', quantidade: 0 }],
     })
   }
 
   const handleRemoveItem = (index: number) => {
     const newItens = formData.itens.filter((_, i) => i !== index)
+    
+    if(formData.itens.length === 1) {
+      return
+    }
+  
     setFormData({ ...formData, itens: newItens })
   }
 
@@ -325,32 +356,58 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
             </Button> */}
             </Stack>
             <>
-                {formData.itens.map((item, index) => (
-                  <Stack key={index} direction="row" spacing={2} alignItems="center">
-                    <TextField
-                      label="Nome da planta"
-                      placeholder="Digite o nome popular da planta"
-                      name="nome"
-                      value={item.nome}
-                      onChange={(e) => handleItemChange(index, e)}
-                      variant="outlined"
-                      sx={{ width: '100%', maxWidth: 400 }}
-                    />
-                    <TextField
-                      label="Quantidade"
-                      placeholder="Digite a quantidade em unidades"
-                      name="quantidade"
-                      value={item.quantidade}
-                      onChange={(e) => handleItemChange(index, e)}
-                      type="number"
-                      variant="outlined"
-                      sx={{ width: '50%', maxWidth: 320 }}
-                    />
-                    <IconButton onClick={() => handleRemoveItem(index)}>
-                      <RemoveCircleOutlineIcon color="error" />
-                    </IconButton>
-                  </Stack>
-                ))}
+            {formData.itens.map((item, index) => (
+                <Stack key={index} direction="row" spacing={2} alignItems="center">
+                  {/* Autocomplete para Nome da Planta */}
+                    <Autocomplete
+                      fullWidth
+                      options={plantas} 
+                      getOptionKey={(option) => option.id} 
+                      getOptionLabel={(option) => option?.nome || ''}
+                      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                      renderInput={(params) => (
+                        <TextField 
+                          {...params} 
+                          name="nome"
+                          label="Nome da Planta" 
+                          variant="outlined" 
+                          placeholder="Selecione uma planta"
+                        />
+                      )}
+                      value={
+                        // Add a null check and use optional chaining
+                        (plantas && plantas.length > 0) 
+                          ? plantas.find((planta) => planta.id === item.id) || null 
+                          : null
+                      }
+                      onChange={(event, newValue) => {
+                        event.preventDefault()
+                        const newItens = [...formData.itens];
+                        newItens[index] = {
+                          ...newItens[index],
+                          id: newValue?.id || 0,
+                          nome: newValue?.nome || ''
+                        };
+                        setFormData({ ...formData, itens: newItens });
+                      }}
+                      />
+                      {/* Campo para Quantidade */}
+                      <TextField
+                        label="Quantidade"
+                        placeholder="Digite a quantidade em unidades"
+                        name="quantidade"
+                        value={item.quantidade}
+                        onChange={(e) => handleItemChange(index, e)}
+                        type="number"
+                        variant="outlined"
+                        sx={{ width: '50%', maxWidth: 320 }}
+                      />
+                      {/* Botão para Remover Item */}
+                      <IconButton onClick={() => handleRemoveItem(index)}>
+                        <RemoveCircleOutlineIcon color="error" />
+                      </IconButton>
+                    </Stack>
+            ))}
                 <Button
                   variant="outlined"
                   startIcon={<AddCircleOutlineIcon />}

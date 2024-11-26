@@ -18,6 +18,8 @@ import {
   IconButton,
   Box,
   CircularProgress,
+  Menu,
+  MenuItem,
 } from "@mui/material"
 import { useAuth } from "../../AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -108,6 +110,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
+  const [elementoMenu, setElementoMenu] = useState<HTMLElement | null>(null)	
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/cadastro-planta'
@@ -229,6 +232,15 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         ? Number(value)
         : value,
     }))
+  }
+
+  const handleMenuClick = 
+    (event: React.MouseEvent<HTMLElement>) => {
+      setElementoMenu(event.currentTarget)
+    }
+
+  const handleMenuClose = () => {
+    setElementoMenu(null)
   }
 
   const validaNomePopular = (nomePopular: string): boolean => {
@@ -559,7 +571,9 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                   </span>
                 </TableCell>
                 <TableCell>
-                  <IconButton>
+                  <IconButton onClick={(event) => 
+                    handleMenuClick(event)
+                  }>
                     <MoreVertIcon />
                   </IconButton>
                 </TableCell>
@@ -579,6 +593,10 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+      <Menu anchorEl={elementoMenu} open={Boolean(elementoMenu)} onClose={handleMenuClose}>
+        <MenuItem>Editar</MenuItem>
+        <MenuItem>Desativar</MenuItem>
+      </Menu> 
     </Paper>
   </Stack>
   )
