@@ -139,6 +139,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         nomesPopulares: nomeCientifico.nomesPopulares,
       }))
       setNomesCientificos(nomesCientificos)
+      console.log(responsePlantas.data.data)
       
       const plantas = responsePlantas.data.data.map((planta: Plantas) => ({
         id: planta.id,
