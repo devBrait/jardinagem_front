@@ -2,7 +2,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CssBaseline from '@mui/material/CssBaseline'
 import FormControlLabel from '@mui/material/FormControlLabel'
-import Divider from '@mui/material/Divider'
 import FormLabel from '@mui/material/FormLabel'
 import FormControl from '@mui/material/FormControl'
 import Link from '@mui/material/Link'
@@ -13,7 +12,7 @@ import MuiCard from '@mui/material/Card'
 import HomeIcon from '@mui/icons-material/Home'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
-import { GoogleIcon, UmEntreposto } from './CustomIcons'
+import { UmEntreposto } from './CustomIcons'
 import AppTheme from '../../css/theme/AppTheme'
 import Radio from '@mui/material/Radio'
 import RadioGroup from '@mui/material/RadioGroup'
@@ -576,6 +575,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
               </span>
             </Typography>
           </Box>
+          {/*
           <Divider>ou</Divider>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Button
@@ -588,6 +588,7 @@ export default function  SignUp(props: { disableCustomTheme?: boolean }) {
               Cadastro com Google
             </Button>
           </Box>
+          */}
         </Card>
       </SignUpContainer>
     </AppTheme>
