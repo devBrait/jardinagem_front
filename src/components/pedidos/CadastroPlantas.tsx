@@ -139,7 +139,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         nomesPopulares: nomeCientifico.nomesPopulares,
       }))
       setNomesCientificos(nomesCientificos)
-      console.log(responsePlantas.data.data)
       
       const plantas = responsePlantas.data.data.map((planta: Plantas) => ({
         id: planta.id,
@@ -160,11 +159,9 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
           maximumFractionDigits: 2 // Limita a 2 casas decimais
         }),
       }))
-      console.log(plantas)
       setPlantas(plantas)
 
-    } catch(error){
-      console.log(error)
+    } catch{
       toastr.error('Erro ao carregar nomes científicos.')
     } finally {
       setCarregando(false)
