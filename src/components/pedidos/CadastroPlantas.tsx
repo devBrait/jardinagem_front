@@ -21,7 +21,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material"
-import { useAuth } from "../../AuthContext"
+import { useAuth } from "../../auth/AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
 import Loading from "../loading/Loading"
 import AppTheme from "../../css/theme/AppTheme"
@@ -30,6 +30,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import WarningIcon from '@mui/icons-material/Warning'
 import toastr from 'toastr'
 import axios from "axios"
+import StatusPlantaDialog from "../dialogs/StatusPlanta.Dialog"
+import AlteraQuantidadeDialog from "../dialogs/AlteraQuantidade.dialog"
 
 interface FormData {
   nome_cientifico: string
@@ -74,6 +76,7 @@ interface Plantas {
   preco: number // número float
 }
 
+type Planta = Plantas
 
 interface ApiResponse {
   data: NomeCientifico[]
@@ -107,10 +110,13 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   const isMobile = window.innerWidth < 600 
   const [carregando, setCarregando] = useState(false)
   const [nomesPopulares, setNomesPopulares] = useState<NomePopular[]>([])
+  const [openModalEditar, setOpenModalEditar] = useState(false)
+  const [openModalAlternar, setOpenModalAlternar] = useState(false)
   const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const [elementoMenu, setElementoMenu] = useState<HTMLElement | null>(null)	
+  const [plantaSelecionada, setPlantaSelecionada] = useState<Planta>()
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/cadastro-planta'
@@ -234,13 +240,59 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     }))
   }
 
-  const handleMenuClick = 
-    (event: React.MouseEvent<HTMLElement>) => {
-      setElementoMenu(event.currentTarget)
+  const handleStatus = (id: number) => {
+    const updatedPlantas = plantas.map(planta => {
+      if (planta.id === id) {
+        return { ...planta, ativo: !planta.ativo }
+      }
+      return planta
+    })
+
+    setPlantas(updatedPlantas)
+  }
+
+  const handleStatusQuantidade = (id: number, quantidade: number) => {
+    let ativo = true
+
+    if (quantidade === 0) {
+      ativo = false
     }
+
+    const updatedPlantas = plantas.map(planta => {
+      if (planta.id === id) {
+        return { ...planta, quantidade: quantidade, ativo: ativo }
+      }
+      return planta
+    })
+
+    setPlantas(updatedPlantas)
+  }
+
+  const handleMenuClick = 
+    (event: React.MouseEvent<HTMLElement>, planta: Planta) => {
+      setElementoMenu(event.currentTarget)
+      setPlantaSelecionada( planta )
+  }
+
+  const handleOptionClick = (option: string) => {
+    if (option === 'Editar' && plantaSelecionada) {
+      if (plantaSelecionada) {
+          setOpenModalEditar(true)
+      }
+      handleMenuClose()
+    }else if(option === 'Alternar' && plantaSelecionada) {
+      setOpenModalAlternar(true)
+      handleMenuClose()
+    }
+  }  
 
   const handleMenuClose = () => {
     setElementoMenu(null)
+  }
+
+  const handleCloseModal = () => {
+    setOpenModalAlternar(false)
+    setOpenModalEditar(false)
   }
 
   const validaNomePopular = (nomePopular: string): boolean => {
@@ -572,7 +624,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={(event) => 
-                    handleMenuClick(event)
+                    handleMenuClick(event, planta)
                   }>
                     <MoreVertIcon />
                   </IconButton>
@@ -594,9 +646,25 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
       <Menu anchorEl={elementoMenu} open={Boolean(elementoMenu)} onClose={handleMenuClose}>
-        <MenuItem>Editar</MenuItem>
-        <MenuItem>Desativar</MenuItem>
+        <MenuItem onClick={() => handleOptionClick('Editar')} disabled={plantaSelecionada?.ativo ? false : true}>Editar</MenuItem>
+        <MenuItem 
+          key={plantaSelecionada?.id || 0} 
+          onClick={() => handleOptionClick('Alternar')}>
+             {plantaSelecionada?.ativo ? 'Desativar' : 'Ativar'}
+        </MenuItem>
       </Menu> 
+      <StatusPlantaDialog
+        open={openModalAlternar}
+        onClose={handleCloseModal}
+        id={plantaSelecionada?.id || 0} 
+        onStatusChange={handleStatus}
+      />
+      <AlteraQuantidadeDialog
+        open={openModalEditar}
+        onClose={handleCloseModal}
+        id={plantaSelecionada?.id || 0}
+        onStatusChange={handleStatusQuantidade}
+      />
     </Paper>
   </Stack>
   )

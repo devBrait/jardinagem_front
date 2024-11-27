@@ -18,7 +18,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
 /*
 import CameraAltIcon from '@mui/icons-material/CameraAlt'
 */
-import { useAuth } from '../../AuthContext'
+import { useAuth } from '../../auth/AuthContext'
 import Loading from '../loading/Loading'
 import { useNavigate, useLocation } from 'react-router-dom'
 import HomeIcon from '@mui/icons-material/Home'

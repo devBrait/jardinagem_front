@@ -1,7 +1,7 @@
 import { Box, Card, CardContent, Typography, Button, TextField, FormLabel, Divider } from "@mui/material"
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { useAuth } from "../../AuthContext"
+import { useAuth } from "../../auth/AuthContext"
 import toastr from '../../toastrConfig'
 
 export default function ContaCliente() {

@@ -1,7 +1,7 @@
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, IconButton, Dialog, DialogContent, DialogTitle, Menu, MenuItem, CircularProgress } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import React, { useCallback, useEffect, useState } from "react"
-import { useAuth } from '../../AuthContext'
+import { useAuth } from '../../auth/AuthContext'
 import toastr from 'toastr'
 import axios from 'axios'
 

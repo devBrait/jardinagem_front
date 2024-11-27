@@ -21,7 +21,7 @@ import toastr from '../../toastrConfig'
 import { InputAdornment } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../AuthContext'
+import { useAuth } from '../../auth/AuthContext'
 import axios from 'axios'
 
 const Card = styled(MuiCard)(({ theme }) => ({

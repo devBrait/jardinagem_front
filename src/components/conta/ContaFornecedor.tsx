@@ -13,7 +13,7 @@ import {
 import AddIcon from "@mui/icons-material/Add"
 import DeleteIcon from "@mui/icons-material/Delete"
 import axios from "axios"
-import { useAuth } from "../../AuthContext"
+import { useAuth } from "../../auth/AuthContext"
 import toastr from "../../toastrConfig"
 
 export default function ContaFornecedor() {
