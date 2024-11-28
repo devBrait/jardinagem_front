@@ -59,7 +59,7 @@ export default function AlteraQuantidadeDialog({open, onClose, id, onStatusChang
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="secondary">
+        <Button onClick={onClose} className='bg-red-400 hover:bg-red-500'>
           Cancelar
         </Button>
         <Button onClick={onConfirm} color="primary" variant="contained">

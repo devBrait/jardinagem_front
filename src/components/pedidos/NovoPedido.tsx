@@ -12,6 +12,8 @@ import {
   CssBaseline,
   Box,
   Autocomplete,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
@@ -26,6 +28,7 @@ import AppTheme from '../../css/theme/AppTheme'
 import axios from 'axios'
 import toastr from 'toastr'
 import WarningIcon from '@mui/icons-material/Warning'
+import ResumoPedido from './pagamento/ResumoPedido'
 
 interface FormData {
   cep: string
@@ -35,7 +38,29 @@ interface FormData {
   estado: string
   observacoes: string
   arquivo: File | null
-  itens: { id: number, nome: string; quantidade: number }[]
+  itens: {
+    id: number
+    nome: string 
+    quantidade: number
+    fornecedorSelecionado?: number
+    quantidadeSelecionada: { [idFornecedor: number]: number, preco: number, idPlanta: number } 
+  }[]
+}
+
+interface Pedido {
+  cep: string
+  enderecoEntrega: string
+  numero: string
+  cidade: string
+  estado: string
+  observacoes: string
+  itens: {
+    id: number
+    nome: string
+    quantidade: number
+    idFornecedor: number
+    preco: number
+  }[]
 }
 
 interface Plantas {
@@ -44,13 +69,23 @@ interface Plantas {
   idNomeCientifico: number
 }
 
+interface opcoesVenda {
+  idPlanta: number
+  id_fornecedor: number
+  nome_fornecedor: string
+  preco: number
+  quantidade: number
+}
+
 export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
   /* Variáveis de Estado para captura de imagem
   const [capturedImage, setCapturedImage] = useState('')
   */
   const { user, loading, update } = useAuth()
+  const [pedido, setPedido] = useState<Pedido | null>(null)
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const [plantas, setPlantas] = useState([] as Plantas[])
+  const [vendas, setVendas] = useState<{ [key: number]: opcoesVenda[] }>({})
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/realiza-pedido'
@@ -85,7 +120,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     estado: '',
     observacoes: '',
     arquivo: null,
-    itens: [{ id: 0, nome: '', quantidade: 0 }],
+    itens: [{ id: 0, nome: '', quantidade: 1, quantidadeSelecionada: { preco: 0, idPlanta: 0 } }],
   })
 
   useEffect(() => {
@@ -129,7 +164,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
       } catch (error) {
         console.error('Erro ao carregar os dados do cliente:', error)
       }
-    };
+    }
 
     fetchClienteData()
   }, [user?.email, apiurl])
@@ -142,7 +177,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
 
   const fetchEnderecoData = async (cep: string) => {
     try {
-      const enderecoResponse = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+      const enderecoResponse = await axios.get(`https://viacep.com.br/ws/${cep}/json/`)
 
       // Verifica se a resposta contém erro
       if (enderecoResponse.data.erro) {
@@ -172,7 +207,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
         estado: enderecoDados.estado,
       }))
     } catch (error) {
-      console.error('Erro ao carregar os dados do endereço:', error);
+      console.error('Erro ao carregar os dados do endereço:', error)
     }
   }
   
@@ -219,24 +254,32 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
   }
 
 
-  const handleItemChange = (index: number, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = event.target;
-    const newItens = [...formData.itens];
+  const handleItemChange = (
+    index: number,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target
+    const newItens = [...formData.itens]
   
-    // Converter o valor de quantidade para número
-    newItens[index] = { 
-      ...newItens[index], 
-      [name]: name === 'quantidade' ? Number(value) : value 
+    // Verificar e atualizar apenas se a quantidade for maior que 0
+    const updatedValue = name === "quantidade" ? Number(value) : value
+  
+    if (name !== "quantidade" || Number(updatedValue) > 0) {
+      newItens[index] = {
+        ...newItens[index],
+        [name]: updatedValue,
+      }
+  
+      setFormData({ ...formData, itens: newItens })
     }
+  }
   
-    setFormData({ ...formData, itens: newItens });
-  };
   
 
   const handleAddItem = () => {
     setFormData({
       ...formData,
-      itens: [...formData.itens, { id: 0, nome: '', quantidade: 0 }],
+      itens: [...formData.itens, { id: 0, nome: '', quantidade: 1, quantidadeSelecionada: {preco: 0, idPlanta: 0} }],
     })
   }
 
@@ -248,6 +291,27 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     }
   
     setFormData({ ...formData, itens: newItens })
+  }
+
+  const fetchOpcoesDeVenda = async (plantaId: number, quantidade: number) => {
+    try {
+      const response = await axios.get(`${apiurl}/plantas/busca-opcoes/${plantaId}/${quantidade}`, {withCredentials: true})
+      console.log(response.data.data)
+      return response.data.data
+    } catch (error) {
+      console.error('Erro ao carregar as opções de venda:', error)
+    }
+  }
+
+  const carregarOpcoesVenda = async (plantaId: number, quantidade: number) => {
+
+    if (quantidade <= 0) {
+      return
+    }
+
+    const opcoesVenda = await fetchOpcoesDeVenda(plantaId, quantidade)
+    console.log(opcoesVenda)
+    setVendas((prev) => ({ ...prev, [plantaId]: opcoesVenda }))
   }
 
   /* Trecho de código para capturar imagem, para futuro reconhecimento de plantas
@@ -263,12 +327,117 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     }
   } */
 
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
-    console.log(formData)
+
+    if(!await validateInputs())
+    {
+      return
+    }
+    console.log(formData.itens)
+    const pedido = {
+      cep: formData.cep,
+      enderecoEntrega: formData.enderecoEntrega,
+      numero: formData.numero,
+      cidade: formData.cidade,
+      estado: formData.estado,
+      observacoes: formData.observacoes,
+      itens: formData.itens.map((item) => ({   
+        id: item.quantidadeSelecionada.idPlanta,
+        nome: item.nome,
+        quantidade: item.quantidadeSelecionada[item.fornecedorSelecionado || 0] || 0,
+        idFornecedor: item.fornecedorSelecionado || 0,
+        preco: item.quantidadeSelecionada.preco
+      })),
+    }
+
+    setPedido(pedido)
   }
 
-  const Content = (
+  const validateInputs = async () => {
+
+    if(!await validaCEP(formData.cep)) {
+      toastr.error('CEP inválido')
+      return false
+    }
+
+    if(formData.numero === '')
+    {
+      toastr.error('Número do endereço não informado.')
+      return false
+    }
+
+    for (let i = 0; i < formData.itens.length; i++) {
+      const item = formData.itens[i]
+      const itemSelecionado = item.quantidadeSelecionada.preco
+  
+      if (itemSelecionado === 0) {
+        toastr.error('Remova itens sem quantidade, ou fornecedor selecionados.')
+        return false
+      }
+    }
+
+    return true
+  }
+
+  const validaCEP = async (cep: string) => {	
+    try {
+      const enderecoResponse = await axios.get(`https://viacep.com.br/ws/${cep}/json/`)
+
+      // Verifica se a resposta contém erro
+      if (enderecoResponse.data.erro) {
+        toastr.error('CEP inválido')
+        return false
+      }
+
+      return true
+    } catch{
+      toastr.error('CEP inválido')
+      return false
+    }
+  }
+
+  const handleOptionChange = (index: number, optionId: number, checked: boolean) => {
+    const newItens = [...formData.itens]
+  
+    if (checked) {
+      newItens[index].fornecedorSelecionado = optionId
+    } else {
+      if (newItens[index].fornecedorSelecionado === optionId) {
+        newItens[index].fornecedorSelecionado = 0
+      }
+    }
+  
+    setFormData({ ...formData, itens: newItens })
+  }
+
+  const handleQuantityChange = (index: number, idFornecedor: number, quantidade: string, preco: number, idPlanta: number) => {
+    const updatedItems = [...formData.itens]
+    
+    const item = updatedItems[index]
+    
+    if (!item.quantidadeSelecionada) {
+      item.quantidadeSelecionada = { preco, idPlanta }
+    }
+
+    console.log(idPlanta)
+
+    // Atualiza a quantidade do fornecedor específico
+    item.quantidadeSelecionada[idFornecedor] = parseInt(quantidade, 10) || 0
+    item.quantidadeSelecionada.preco = preco
+    item.quantidadeSelecionada.idPlanta = idPlanta
+    
+    // Atualiza o estado
+    setFormData({ ...formData, itens: updatedItems })
+  }
+  
+  const closePedido = () => {
+    setPedido(null)
+  }
+
+  const Content = pedido ? (
+        <ResumoPedido pedido={pedido} closePedido={closePedido} />
+  ) : (
     <Stack spacing={4} sx={{ maxWidth: '100%', maxHeight: '900px', mx: 'auto', mt: '15px', mg: 10 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="h4" align="left">
@@ -357,57 +526,122 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
             </Stack>
             <>
             {formData.itens.map((item, index) => (
-                <Stack key={index} direction="row" spacing={2} alignItems="center">
-                  {/* Autocomplete para Nome da Planta */}
+                <Stack key={index} spacing={2} width="100%">
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    {/* Autocomplete para Nome da Planta */}
                     <Autocomplete
                       fullWidth
-                      options={plantas} 
-                      getOptionKey={(option) => option.id} 
+                      options={plantas}
+                      noOptionsText="Nenhuma planta encontrada"
+                      getOptionKey={(option) => option.id}
                       getOptionLabel={(option) => option?.nome || ''}
                       isOptionEqualToValue={(option, value) => option?.id === value?.id}
                       renderInput={(params) => (
-                        <TextField 
-                          {...params} 
+                        <TextField
+                          {...params}
                           name="nome"
-                          label="Nome da Planta" 
-                          variant="outlined" 
+                          label="Nome da Planta"
+                          variant="outlined"
                           placeholder="Selecione uma planta"
                         />
                       )}
                       value={
-                        // Add a null check and use optional chaining
-                        (plantas && plantas.length > 0) 
-                          ? plantas.find((planta) => planta.id === item.id) || null 
+                        (plantas && plantas.length > 0)
+                          ? plantas.find((planta) => planta.id === item.id) || null
                           : null
                       }
                       onChange={(event, newValue) => {
                         event.preventDefault()
-                        const newItens = [...formData.itens];
+                        const newItens = [...formData.itens]
                         newItens[index] = {
                           ...newItens[index],
                           id: newValue?.id || 0,
                           nome: newValue?.nome || ''
-                        };
-                        setFormData({ ...formData, itens: newItens });
+                        }
+                        setFormData({ ...formData, itens: newItens })
+                        // Chamar rotina para carregar opções de venda
+                        if (newValue) {
+                          carregarOpcoesVenda(newValue.id, item.quantidade)
+                        }
                       }}
-                      />
-                      {/* Campo para Quantidade */}
-                      <TextField
-                        label="Quantidade"
-                        placeholder="Digite a quantidade em unidades"
-                        name="quantidade"
-                        value={item.quantidade}
-                        onChange={(e) => handleItemChange(index, e)}
-                        type="number"
-                        variant="outlined"
-                        sx={{ width: '50%', maxWidth: 320 }}
-                      />
-                      {/* Botão para Remover Item */}
-                      <IconButton onClick={() => handleRemoveItem(index)}>
-                        <RemoveCircleOutlineIcon color="error" />
-                      </IconButton>
+                    />
+                    
+                    {/* Campo para Quantidade */}
+                    <TextField
+                      label="Quantidade"
+                      placeholder="Digite a quantidade em unidades"
+                      name="quantidade"
+                      value={item.quantidade}
+                      onChange={(e) => handleItemChange(index, e)}
+                      type="number"
+                      variant="outlined"
+                      sx={{ width: '50%', maxWidth: 320 }}
+                    />
+                    
+                    {/* Botão para Remover Item */}
+                    <IconButton onClick={() => handleRemoveItem(index)}>
+                      <RemoveCircleOutlineIcon color="error" />
+                    </IconButton>
+                  </Stack>
+
+                  {/* Renderizar Opções de Venda abaixo */}
+                  {vendas[item.id] && vendas[item.id].length > 0 ? (
+                  <Stack spacing={1} width="100%">
+                      <Typography variant="subtitle1">Opções de Venda:</Typography>
+                      <Stack direction="row" flexWrap="wrap">
+                        {vendas[item.id].map((venda) => (
+                          <Stack
+                            key={venda.id_fornecedor}
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            marginBottom={1}
+                          >
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={Boolean(item.fornecedorSelecionado === venda.id_fornecedor)}
+                                  onChange={(e) =>
+                                    handleOptionChange(index, venda.id_fornecedor, e.target.checked)
+                                  }
+                                  name={`venda-${venda.nome_fornecedor}`}
+                                />
+                              }
+                              label={`${venda.nome_fornecedor} (${venda.quantidade} unidades) por R$ ${venda.preco
+                                .toFixed(2)
+                                .replace('.', ',')} (un)`}
+                            />
+                            {item.fornecedorSelecionado === venda.id_fornecedor && (
+                              <TextField
+                                type="number"
+                                size="small"
+                                variant="outlined"
+                                value={item.quantidadeSelecionada[venda.id_fornecedor] || ''}
+                                onChange={(e) => {
+                                  const valor = parseInt(e.target.value, 10) || 0
+                                  if (valor < 0) {
+                                    toastr.error("A quantidade mínima é 1.")
+                                  } else if (valor > venda.quantidade) {
+                                    toastr.error(`Máximo permitido é ${venda.quantidade}.`)
+                                  } else {
+                                    handleQuantityChange(index, venda.id_fornecedor, e.target.value, venda.preco, venda.idPlanta)
+                                  }
+                                }}
+                                placeholder="Qtd"
+                                style={{ width: '70px' }}
+                              />
+                            )}
+                          </Stack>
+                        ))}
+                      </Stack>
                     </Stack>
-            ))}
+                  ) : vendas[item.id] ? (
+                    <Typography variant="body2" color="textSecondary">
+                      Ninguém está vendendo isso no momento.
+                    </Typography>
+                  ) : null}
+                </Stack>
+              ))}
                 <Button
                   variant="outlined"
                   startIcon={<AddCircleOutlineIcon />}
@@ -430,7 +664,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
             />
 
             <Button variant="contained" className="bg-verde_claro" type="submit" fullWidth>
-              Enviar
+              Finalizar Pedido
             </Button>
           </Stack>
         </form>

@@ -295,51 +295,58 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     setOpenModalEditar(false)
   }
 
-  const validaNomePopular = (nomePopular: string): boolean => {
+  const validaNomePopular = async (nomePopular: string): Promise<{ id: number, idNomeCientifico: number } | null> => {
     const nomeEncontrado = nomesPopulares.find(
       (item) => item.nome.toLowerCase() === nomePopular.toLowerCase()
     )
   
     if (nomeEncontrado) {
       const nomeCientificoEncontrado = nomesCientificos.find(
-        (item) => item.id === nomeEncontrado.id
+        (item) => item.id === nomeEncontrado.idNomeCientifico
       )
   
       if (nomeCientificoEncontrado) {
-        // Atualiza formData usando a função assíncrona de atualização
-        setFormData((prevFormData) => ({
+        // Atualiza formData de forma assíncrona
+        await setFormData((prevFormData) => ({
           ...prevFormData,
           nome_cientifico: nomeCientificoEncontrado.nome,
           id_nome_cientifico: nomeCientificoEncontrado.id,
           id_nome_popular: nomeEncontrado.id
         }))
-        return true
+
+        return {
+          id: nomeEncontrado.id,
+          idNomeCientifico: nomeCientificoEncontrado.id,
+        }
       } else {
         toastr.error('Nome científico não encontrado no sistema.')
-        return false
+        return null 
       }
     } else {
       toastr.error('Nome popular não encontrado no sistema.')
-      return false
+      return null 
     }
   }
   
+  
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-  
-    if (!validateInputs()) {
+
+    
+    if (!await validateInputs()) {
       return
     }
 
-    const validNomePopular = validaNomePopular(formData.nome_popular)
-    if (!validNomePopular) {
+    const lstPopularCientifico = await validaNomePopular(formData.nome_popular)
+    if (!lstPopularCientifico) {
       return
     }
+
   
     const novaPlanta = {
       idFornecedor: user?.id,
-      idNomeCientifico: formData.id_nome_cientifico,
-      idNomePopular: formData.id_nome_popular,
+      idNomeCientifico: lstPopularCientifico.idNomeCientifico,
+      idNomePopular: lstPopularCientifico.id,
       topiaria: formData.floracao,
       cor_floracao: formData.cor_folhagem,
       altura_total: formData.altura_max,
@@ -369,23 +376,14 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         quantidade: 0,
         ativo: true
       })
-    } catch {
+    } catch{
       toastr.error('Erro ao cadastrar planta!')
     }
   }
   
-  const validateInputs = (): boolean => {
-    const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
-  
-    // Valida o nome popular e científico
-    if (formData.nome_popular !== '') {
-      if (!validaNomePopular(formData.nome_popular)) {
-        return false
-      }
-    }
-  
-    // Valida os campos restantes
-    if (formData.nome_popular === '' || formData.nome_cientifico === '' 
+  const validateInputs = async (): Promise<boolean> => {
+    // Valida os outros campos do formulário
+    if (formData.nome_popular === ''
       || formData.altura_max <= 0 || formData.preco === '' || formData.floracao === '' 
       || formData.tamanho <= 0 || formData.cor_folhagem === '' || formData.porte === '' 
       || formData.quantidade <= 0) {
@@ -400,13 +398,14 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     }
   
     // Valida o formato do preço
+    const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
     if (!formatoPreco.test(formData.preco)) {
       toastr.error('O preço deve ser um valor válido em reais, como 1000,00.')
       return false
     }
   
     // Valida o porte da planta
-    if (formData.porte !== 'Pequeno' && formData.porte !== 'Médio' && formData.porte !== 'Grande') {
+    if (formData.porte.toUpperCase() !== 'PEQUENO' && formData.porte.toUpperCase() !== 'MÉDIO' && formData.porte.toUpperCase() !== 'GRANDE') {
       toastr.error('O porte deve ser Pequeno, Médio ou Grande.')
       return false
     }
@@ -488,7 +487,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.altura_max}
                 onChange={handleChange}
                 variant="outlined"
-                type="number"
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>
@@ -500,7 +498,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.tamanho}
                 onChange={handleChange}
                 variant="outlined"
-                type="number"
               />
             </Stack>
           </Stack>
@@ -525,7 +522,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.quantidade}
                 onChange={handleChange}
                 variant="outlined"
-                type="number"
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>

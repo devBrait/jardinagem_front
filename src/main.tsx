@@ -14,6 +14,7 @@ import Erro from './components/error/Erro.tsx'
 import Admin from './components/dashboard/Admin.tsx'
 import CadastroPlantas from './components/pedidos/CadastroPlantas.tsx'
 import NovoPedido from './components/pedidos/NovoPedido.tsx'
+import PedidoRealizado from './components/pedidos/PedidoRealizado.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <AuthProvider>
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/dashboard-admin" element={<Admin />} />
             <Route path="/cadastro-planta" element={<CadastroPlantas />} />
             <Route path="/realiza-pedido" element={<NovoPedido />} />
+            <Route path="/pedido-realizado" element={<PedidoRealizado />} />
             <Route path="*" element={<Erro />} /> {/* Captura todas as rotas não reconhecidas */}
           </Routes>
         </Router>
