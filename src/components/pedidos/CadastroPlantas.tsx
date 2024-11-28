@@ -21,7 +21,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material"
-import { useAuth } from "../../AuthContext"
+import { useAuth } from "../../auth/AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
 import Loading from "../loading/Loading"
 import AppTheme from "../../css/theme/AppTheme"
@@ -30,6 +30,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import WarningIcon from '@mui/icons-material/Warning'
 import toastr from 'toastr'
 import axios from "axios"
+import StatusPlantaDialog from "../dialogs/StatusPlanta.Dialog"
+import AlteraQuantidadeDialog from "../dialogs/AlteraQuantidade.dialog"
 
 interface FormData {
   nome_cientifico: string
@@ -74,6 +76,7 @@ interface Plantas {
   preco: number // número float
 }
 
+type Planta = Plantas
 
 interface ApiResponse {
   data: NomeCientifico[]
@@ -107,10 +110,13 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
   const isMobile = window.innerWidth < 600 
   const [carregando, setCarregando] = useState(false)
   const [nomesPopulares, setNomesPopulares] = useState<NomePopular[]>([])
+  const [openModalEditar, setOpenModalEditar] = useState(false)
+  const [openModalAlternar, setOpenModalAlternar] = useState(false)
   const [nomesCientificos, setNomesCientificos] = useState<NomeCientifico[]>([])
   const { user, loading, update } = useAuth()
   const [loadingComponentState, setLoadingComponentState] = useState(true)
   const [elementoMenu, setElementoMenu] = useState<HTMLElement | null>(null)	
+  const [plantaSelecionada, setPlantaSelecionada] = useState<Planta>()
   const navigate = useNavigate()
   const location = useLocation()
   const acessoPelaRota = location.pathname === '/cadastro-planta'
@@ -234,60 +240,113 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     }))
   }
 
-  const handleMenuClick = 
-    (event: React.MouseEvent<HTMLElement>) => {
-      setElementoMenu(event.currentTarget)
+  const handleStatus = (id: number) => {
+    const updatedPlantas = plantas.map(planta => {
+      if (planta.id === id) {
+        return { ...planta, ativo: !planta.ativo }
+      }
+      return planta
+    })
+
+    setPlantas(updatedPlantas)
+  }
+
+  const handleStatusQuantidade = (id: number, quantidade: number) => {
+    let ativo = true
+
+    if (quantidade === 0) {
+      ativo = false
     }
+
+    const updatedPlantas = plantas.map(planta => {
+      if (planta.id === id) {
+        return { ...planta, quantidade: quantidade, ativo: ativo }
+      }
+      return planta
+    })
+
+    setPlantas(updatedPlantas)
+  }
+
+  const handleMenuClick = 
+    (event: React.MouseEvent<HTMLElement>, planta: Planta) => {
+      setElementoMenu(event.currentTarget)
+      setPlantaSelecionada( planta )
+  }
+
+  const handleOptionClick = (option: string) => {
+    if (option === 'Editar' && plantaSelecionada) {
+      if (plantaSelecionada) {
+          setOpenModalEditar(true)
+      }
+      handleMenuClose()
+    }else if(option === 'Alternar' && plantaSelecionada) {
+      setOpenModalAlternar(true)
+      handleMenuClose()
+    }
+  }  
 
   const handleMenuClose = () => {
     setElementoMenu(null)
   }
 
-  const validaNomePopular = (nomePopular: string): boolean => {
+  const handleCloseModal = () => {
+    setOpenModalAlternar(false)
+    setOpenModalEditar(false)
+  }
+
+  const validaNomePopular = async (nomePopular: string): Promise<{ id: number, idNomeCientifico: number } | null> => {
     const nomeEncontrado = nomesPopulares.find(
       (item) => item.nome.toLowerCase() === nomePopular.toLowerCase()
     )
   
     if (nomeEncontrado) {
       const nomeCientificoEncontrado = nomesCientificos.find(
-        (item) => item.id === nomeEncontrado.id
+        (item) => item.id === nomeEncontrado.idNomeCientifico
       )
   
       if (nomeCientificoEncontrado) {
-        // Atualiza formData usando a função assíncrona de atualização
-        setFormData((prevFormData) => ({
+        // Atualiza formData de forma assíncrona
+        await setFormData((prevFormData) => ({
           ...prevFormData,
           nome_cientifico: nomeCientificoEncontrado.nome,
           id_nome_cientifico: nomeCientificoEncontrado.id,
           id_nome_popular: nomeEncontrado.id
         }))
-        return true
+
+        return {
+          id: nomeEncontrado.id,
+          idNomeCientifico: nomeCientificoEncontrado.id,
+        }
       } else {
         toastr.error('Nome científico não encontrado no sistema.')
-        return false
+        return null 
       }
     } else {
       toastr.error('Nome popular não encontrado no sistema.')
-      return false
+      return null 
     }
   }
   
+  
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-  
-    if (!validateInputs()) {
+
+    
+    if (!await validateInputs()) {
       return
     }
 
-    const validNomePopular = validaNomePopular(formData.nome_popular)
-    if (!validNomePopular) {
+    const lstPopularCientifico = await validaNomePopular(formData.nome_popular)
+    if (!lstPopularCientifico) {
       return
     }
+
   
     const novaPlanta = {
       idFornecedor: user?.id,
-      idNomeCientifico: formData.id_nome_cientifico,
-      idNomePopular: formData.id_nome_popular,
+      idNomeCientifico: lstPopularCientifico.idNomeCientifico,
+      idNomePopular: lstPopularCientifico.id,
       topiaria: formData.floracao,
       cor_floracao: formData.cor_folhagem,
       altura_total: formData.altura_max,
@@ -317,23 +376,14 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         quantidade: 0,
         ativo: true
       })
-    } catch {
+    } catch{
       toastr.error('Erro ao cadastrar planta!')
     }
   }
   
-  const validateInputs = (): boolean => {
-    const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
-  
-    // Valida o nome popular e científico
-    if (formData.nome_popular !== '') {
-      if (!validaNomePopular(formData.nome_popular)) {
-        return false
-      }
-    }
-  
-    // Valida os campos restantes
-    if (formData.nome_popular === '' || formData.nome_cientifico === '' 
+  const validateInputs = async (): Promise<boolean> => {
+    // Valida os outros campos do formulário
+    if (formData.nome_popular === ''
       || formData.altura_max <= 0 || formData.preco === '' || formData.floracao === '' 
       || formData.tamanho <= 0 || formData.cor_folhagem === '' || formData.porte === '' 
       || formData.quantidade <= 0) {
@@ -348,13 +398,14 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
     }
   
     // Valida o formato do preço
+    const formatoPreco = /^\d+(\.\d{3})*(,\d{2})?$|^\d+(\.\d{2})?$/
     if (!formatoPreco.test(formData.preco)) {
       toastr.error('O preço deve ser um valor válido em reais, como 1000,00.')
       return false
     }
   
     // Valida o porte da planta
-    if (formData.porte !== 'Pequeno' && formData.porte !== 'Médio' && formData.porte !== 'Grande') {
+    if (formData.porte.toUpperCase() !== 'PEQUENO' && formData.porte.toUpperCase() !== 'MÉDIO' && formData.porte.toUpperCase() !== 'GRANDE') {
       toastr.error('O porte deve ser Pequeno, Médio ou Grande.')
       return false
     }
@@ -436,7 +487,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.altura_max}
                 onChange={handleChange}
                 variant="outlined"
-                type="number"
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>
@@ -448,7 +498,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.tamanho}
                 onChange={handleChange}
                 variant="outlined"
-                type="number"
               />
             </Stack>
           </Stack>
@@ -473,7 +522,6 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 value={formData.quantidade}
                 onChange={handleChange}
                 variant="outlined"
-                type="number"
               />
             </Stack>
             <Stack spacing={1} sx={{ flex: 1 }}>
@@ -572,7 +620,7 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={(event) => 
-                    handleMenuClick(event)
+                    handleMenuClick(event, planta)
                   }>
                     <MoreVertIcon />
                   </IconButton>
@@ -594,9 +642,25 @@ export default function CadastroPlantas(props: { disableCustomTheme?: boolean })
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
       <Menu anchorEl={elementoMenu} open={Boolean(elementoMenu)} onClose={handleMenuClose}>
-        <MenuItem>Editar</MenuItem>
-        <MenuItem>Desativar</MenuItem>
+        <MenuItem onClick={() => handleOptionClick('Editar')} disabled={plantaSelecionada?.ativo ? false : true}>Editar</MenuItem>
+        <MenuItem 
+          key={plantaSelecionada?.id || 0} 
+          onClick={() => handleOptionClick('Alternar')}>
+             {plantaSelecionada?.ativo ? 'Desativar' : 'Ativar'}
+        </MenuItem>
       </Menu> 
+      <StatusPlantaDialog
+        open={openModalAlternar}
+        onClose={handleCloseModal}
+        id={plantaSelecionada?.id || 0} 
+        onStatusChange={handleStatus}
+      />
+      <AlteraQuantidadeDialog
+        open={openModalEditar}
+        onClose={handleCloseModal}
+        id={plantaSelecionada?.id || 0}
+        onStatusChange={handleStatusQuantidade}
+      />
     </Paper>
   </Stack>
   )

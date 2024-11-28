@@ -21,7 +21,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu"
 import { useNavigate } from "react-router-dom"
 import AddIcon from "@mui/icons-material/Add"
-import { useAuth } from "../../AuthContext"
+import { useAuth } from "../../auth/AuthContext"
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'
 
 export default function Navbar() {

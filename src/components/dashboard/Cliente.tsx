@@ -1,6 +1,6 @@
 import { CssBaseline, Box, Button, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
-import { useAuth } from '../../AuthContext'
+import { useAuth } from '../../auth/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import Loading from '../loading/Loading'
 import AppTheme from '../../css/theme/AppTheme'

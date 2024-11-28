@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Box, Card, CardContent, Typography, Button, FormControlLabel, Checkbox, TextField, Divider, InputAdornment, IconButton } from "@mui/material"
 import { Visibility, VisibilityOff } from "@mui/icons-material"
 import toastr from "toastr"
-import { useAuth } from "../../AuthContext"
+import { useAuth } from "../../auth/AuthContext"
 import axios from "axios"
 
 export default function Configuracoes() {
