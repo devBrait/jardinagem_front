@@ -159,9 +159,7 @@ export default function ResumoPedido({ pedido, closePedido }: ResumoPedidoProps)
         <div className="flex space-x-4">
           <Button
             onClick={closePedido}
-            variant="outlined"
-            color="primary"
-            className="flex-1 py-3 flex items-center justify-center gap-2"
+            className="flex-1 py-3 flex items-center justify-center gap-2 bg-vermelho hover:bg-red-400"
             startIcon={<ArrowBackIcon />}
           >
             Voltar
