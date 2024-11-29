@@ -135,10 +135,9 @@ export default function Pagamento({ pedido, closePagamento }: PagamentoProps){
       >
         <Button 
           onClick={closePagamento} 
-          color="secondary" 
-          variant="outlined"
           startIcon={<Cancel />}
           sx={{ minWidth: '120px' }}
+          className='bg-vermelho hover:bg-red-400'
         >
           Cancelar
         </Button>

@@ -11,6 +11,7 @@ export default {
         verde_claro: "#98b344",
         verde_footer: "#DAE3BE",
         cinza_claro: "#656565",
+        vermelho: "#e95a5a"
       }
     },
   },

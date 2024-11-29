@@ -296,7 +296,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
   const fetchOpcoesDeVenda = async (plantaId: number, quantidade: number) => {
     try {
       const response = await axios.get(`${apiurl}/plantas/busca-opcoes/${plantaId}/${quantidade}`, {withCredentials: true})
-      console.log(response.data.data)
+
       return response.data.data
     } catch (error) {
       console.error('Erro ao carregar as opções de venda:', error)
@@ -310,7 +310,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     }
 
     const opcoesVenda = await fetchOpcoesDeVenda(plantaId, quantidade)
-    console.log(opcoesVenda)
+    
     setVendas((prev) => ({ ...prev, [plantaId]: opcoesVenda }))
   }
 
@@ -334,7 +334,7 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     {
       return
     }
-    console.log(formData.itens)
+    
     const pedido = {
       cep: formData.cep,
       enderecoEntrega: formData.enderecoEntrega,
@@ -369,9 +369,12 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
 
     for (let i = 0; i < formData.itens.length; i++) {
       const item = formData.itens[i]
-      const itemSelecionado = item.quantidadeSelecionada.preco
+      const preco = item.quantidadeSelecionada.preco
+      const fornecedorSelecionado = item.fornecedorSelecionado
+      const quantidade = item.quantidadeSelecionada[fornecedorSelecionado || 0]
+      const nome = item.nome
   
-      if (itemSelecionado === 0) {
+      if (preco === 0 || nome == '' || !fornecedorSelecionado || quantidade === 0) {
         toastr.error('Remova itens sem quantidade, ou fornecedor selecionados.')
         return false
       }
@@ -402,9 +405,11 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
   
     if (checked) {
       newItens[index].fornecedorSelecionado = optionId
+      newItens[index].quantidadeSelecionada[optionId] = 0
     } else {
       if (newItens[index].fornecedorSelecionado === optionId) {
         newItens[index].fornecedorSelecionado = 0
+        newItens[index].quantidadeSelecionada[optionId] = 0
       }
     }
   
@@ -419,8 +424,6 @@ export default function NovoPedido(props: { disableCustomTheme?: boolean }) {
     if (!item.quantidadeSelecionada) {
       item.quantidadeSelecionada = { preco, idPlanta }
     }
-
-    console.log(idPlanta)
 
     // Atualiza a quantidade do fornecedor específico
     item.quantidadeSelecionada[idFornecedor] = parseInt(quantidade, 10) || 0
