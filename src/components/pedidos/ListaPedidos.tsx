@@ -1,32 +1,71 @@
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, IconButton, Dialog, DialogContent, DialogTitle, Menu, MenuItem } from '@mui/material'
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useAuth } from '../../auth/AuthContext'
+import axios from 'axios'
+import { StatusPedidoDialog } from '../dialogs/StatusPedido.dialog'
+import { ItensPedidoDialog } from '../dialogs/ItensPedido.dialog'
 
 export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedidoClick: () => void }) {
   
     interface Pedido {
       id: number
-      name: string
-      itens: number
-      empresa: string
+      quantidade: number
+      nomeFornecedor: string
       status: string
     }
 
   const [elementoMenu, setelementoMenu] = useState<null | HTMLElement>(null) // Estado para o Menu
-  const [openModal, setOpenModal] = useState(false) // Estado para o Modal
-  const [selectedOption, setSelectedOption] = useState('') // Estado para opção selecionada
+  const [openModalAlternar, setOpenModalAlternar] = useState(false)
+  const [openModalVisualizar, setopenModalVisualizar] = useState(false)
   const [pedidoSelecionado, setPedidoSelecionado] = useState<Pedido | null>(null) // Estado para o pedido selecionado
+  const [pedidos, setPedidos] = useState([] as Pedido[]) // Estado para os pedidos
+  const { user } = useAuth()
+  const apiurl = import.meta.env.VITE_APP_API_URL
+  const [carregando, setCarregando] = useState(false)
+
+  const loadPedidos = useCallback(async () => {
+    if (!user?.id) {
+      toastr.error('Usuário não identificado.')
+      return
+    }
+  
+    try {
+      setCarregando(true)
+  
+      const response = await axios.get(`${apiurl}/pedidos/getAllCliente/${user.id}`, {
+        withCredentials: true,
+      })
+      
+      setPedidos(response.data.data)
+    } catch{
+      toastr.error('Erro ao carregar as solicitações.')
+    } finally {
+      setCarregando(false)
+    }
+  }, [apiurl, user?.id])
+  
 
 
-  const pedidos = [
-    { id: 1, name: 'Pedido #123', itens: 12, empresa: 'Empresa X', status: 'Ativo'},
-    { id: 2, name: 'Pedido #456', itens: 2, empresa: 'Empresa Y', status: 'Cancelado'},
-    { id: 3, name: 'Pedido #789', itens: 7, empresa: 'Empresa Z', status: 'Preparando'},
-  ]
+  useEffect(() => {
+    loadPedidos()
+  }, [loadPedidos])
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, pedido: Pedido) => {
     setelementoMenu(event.currentTarget) // Define o elemento do Menu
     setPedidoSelecionado(pedido) // Define o pedido selecionado
+  }
+
+  
+  const handleStatus = (id: number) => {
+    const updatedPedidos = pedidos.map(pedido => {
+      if (pedido.id === id) {
+        return { ...pedido, status: 'Cancelado' }
+      }
+      return pedido
+    })
+
+    setPedidos(updatedPedidos)
   }
 
   const handleMenuClose = () => {
@@ -34,16 +73,20 @@ export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedi
   }
 
   const handleOptionClick = (option: string) => {
-    setSelectedOption(option)
-    setOpenModal(true) // Abre o modal
-    handleMenuClose() // Fecha o menu
+    if (option === 'Visualizar' && pedidoSelecionado) {
+        setopenModalVisualizar(true)
+    }else if(option === 'Cancelar' && pedidoSelecionado) {
+      setOpenModalAlternar(true)
+    }
+    handleMenuClose() 
   }
 
   const handleCloseModal = () => {
-    setOpenModal(false) // Fecha o modal
+    setOpenModalAlternar(false)
+    setopenModalVisualizar(false)
   }
 
-  return (
+  const Content = (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" gutterBottom>
         Meus Pedidos
@@ -87,11 +130,17 @@ export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedi
             </TableRow>
           </TableHead>
           <TableBody>
-            {pedidos.map((pedido) => (
+            {pedidos.length === 0 ? (
+              <TableRow>
+              <TableCell colSpan={8} align="center">
+                Nenhum pedido realizado.
+              </TableCell>
+            </TableRow>
+            ) : (pedidos.map((pedido) => (
               <TableRow key={pedido.id}>
-                <TableCell>{pedido.name}</TableCell>
-                <TableCell>{pedido.itens}</TableCell>
-                <TableCell>{pedido.empresa}</TableCell>
+                <TableCell>Pedido #{pedido.id}</TableCell>
+                <TableCell>{pedido.quantidade}</TableCell>
+                <TableCell>{pedido.nomeFornecedor}</TableCell>
                 <TableCell>
                   <span
                     style={{
@@ -99,12 +148,12 @@ export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedi
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      backgroundColor: pedido.status === 'Ativo' ? '#98b344' : pedido.status === 'Cancelado' ? '#e95a5a' : '#656565',
+                      backgroundColor: pedido.status === 'Pagamento realizado' ? '#98b344' : pedido.status === 'Cancelado' ? '#e95a5a' : '#656565',
                       color: 'white',
                       padding: '4px 8px',
                       borderRadius: '6px',
                       width: '100px',
-                      height: '30px',
+                      height: '50px',
                       textAlign: 'center',
                     }}
                   >
@@ -117,26 +166,35 @@ export default function ListaPedidos({ handleNovoPedidoClick }: { handleNovoPedi
                   </IconButton>
                 </TableCell>
               </TableRow>
-            ))}
+                  
+            )))}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* Menu de opções */}
       <Menu anchorEl={elementoMenu} open={Boolean(elementoMenu)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => handleOptionClick('Visualizar')}>Visualizar</MenuItem>
-        <MenuItem onClick={() => handleOptionClick('Cancelar')} >Cancelar</MenuItem>
+        <MenuItem onClick={() => handleOptionClick('Visualizar')} disabled={pedidoSelecionado?.status == 'Cancelado' ? true : false}>Visualizar</MenuItem>
+        <MenuItem onClick={() => handleOptionClick('Cancelar')} disabled={pedidoSelecionado?.status == 'Cancelado' ? true : false}>Cancelar</MenuItem>
       </Menu>
-
-      {/* Modal para exibir a opção selecionada */}
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle >{selectedOption} Pedido</DialogTitle>
-        <DialogContent>
-          <Typography >
-            Ação: {selectedOption} para o pedido {pedidoSelecionado?.name}.
-          </Typography>
-        </DialogContent>
-      </Dialog>
+      
+      <StatusPedidoDialog
+        open={openModalAlternar}
+        onClose={handleCloseModal}
+        id={pedidoSelecionado?.id ?? 0} 
+        onStatusChange={handleStatus}
+      />
+      <ItensPedidoDialog
+        open={openModalVisualizar}
+        onClose={handleCloseModal}
+        idPedido={pedidoSelecionado?.id ?? 0}
+      />
     </Box>
   )
+
+  return  carregando ? (
+    <div className="flex items-center justify-center h-screen">
+      <CircularProgress />
+    </div>
+  ) : Content
 }

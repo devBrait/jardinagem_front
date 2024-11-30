@@ -30,6 +30,7 @@ interface ResumoPedidoProps {
 }
 
 export default function ResumoPedido({ pedido, closePedido }: ResumoPedidoProps) {
+  console.log(pedido)
     const [pagamento, setPagamento] = useState({
         pix: false,
         boleto: false
@@ -76,8 +77,14 @@ export default function ResumoPedido({ pedido, closePedido }: ResumoPedidoProps)
             <HomeIcon className="text-primary"/>
             Endereço de Entrega
           </Typography>
-          <Typography variant="body1" className="pl-8">
+          <Typography variant="body1" className="pl-8 mb-2">
+            CEP: {pedido.cep}
+          </Typography>
+          <Typography variant="body1" className="pl-8 mb-2">
             {pedido.enderecoEntrega + ', ' + pedido.numero}
+          </Typography>
+          <Typography variant="body1" className="pl-8">
+            {pedido.cidade + ' - ' + pedido.estado}
           </Typography>
         </Paper>
   
