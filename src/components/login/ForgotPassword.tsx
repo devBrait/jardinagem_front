@@ -11,10 +11,9 @@ import Radio from '@mui/material/Radio'
 import RadioGroup from '@mui/material/RadioGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import { useState } from 'react'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
-import IconButton from '@mui/material/IconButton'
 import toastr from './../../toastrConfig'
 import axios from 'axios'
+import RedefineSenha from './RedefineSenha'
 
 interface ForgotPasswordProps {
   open: boolean
@@ -23,13 +22,11 @@ interface ForgotPasswordProps {
 
 export default function ForgotPassword({ open, handleClose }: ForgotPasswordProps) {
   const [userType, setUserType] = useState('paisagista')
+  const [codigo, setCodigo] = useState(0) 
+  const [openRedefinir, setOpenRedefinir] = useState(false)
   const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
   const [emailError, setEmailError] = useState(false)
   const [emailErrorMessage, setEmailErrorMessage] = useState('')
-  const [passwordError, setPasswordError] = useState(false)
-  const [passwordErrorMessage, setPasswordErrorMessage] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const apiurl = import.meta.env.VITE_APP_API_URL
 
   const handleForgotPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -47,42 +44,28 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
       setEmailErrorMessage('')
     }
   
-    // Validação da senha
-    if (!senha || senha.length < 6) {
-      setPasswordError(true)
-      setPasswordErrorMessage('A senha deve conter pelo menos 6 caracteres.')
-      isValid = false
-    } else {
-      setPasswordError(false)
-      setPasswordErrorMessage('')
-    }
-  
     if (isValid) {
-      const url = userType === 'paisagista' 
-        ? `${apiurl}/clientes/redefinir-senha` 
-        : `${apiurl}/paisagistas/redefinir-senha`
+      const url = `${apiurl}/codigo/envia-codigo` 
   
-      const success = await redefineSenha(url, email, senha)
-  
-      if (success) {
-        toastr.success('Senha redefinida com sucesso!')
-        handleClose()
-      } else {
-        toastr.error('Erro ao redefinir senha!')
-      }
+      await EnviaCodigoAsync(url, email)
     }
   }
   
 
-  const redefineSenha = async (url: string, email: string, senha: string) => {
+  const EnviaCodigoAsync = async (url: string, email: string) => {
     try {
-      const response = await axios.put(url, { email, senha }, { headers: { 'Content-Type': 'application/json' } })
+
+      const response = await axios.post(url, { email: email }, { headers: { 'Content-Type': 'application/json' } })
   
-      if (response.status !== 200 && response.status !== 204) {
-        toastr.error("Erro:", response.data.message)
+      if (response.status !== 200 && response.status !== 201) {
+        toastr.error("Erro: impossível enviar código.")
         return false
       }
 
+      setCodigo(response.data.codigo)
+      setOpenRedefinir(true)
+      handleClose()
+      toastr.success('Código enviado para seu email!')
       return true
     } catch (error) {
       console.error("Erro na requisição:", error)
@@ -91,6 +74,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
   }
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -101,10 +85,10 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     >
       <DialogTitle>Resetar Senha</DialogTitle>
       <DialogContent
-        sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}
+        sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}
       >
         <DialogContentText>
-          Por favor, insira seu endereço de e-mail e sua nova senha para que ela seja redefinida.
+          Por favor, insira seu endereço de e-mail para redefinir sua senha.
         </DialogContentText>
 
         <RadioGroup
@@ -132,32 +116,6 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
           />
           {emailError && <p style={{ color: 'red' }}>{emailErrorMessage}</p>}
         </FormControl>
-        <FormControl fullWidth>
-          <FormLabel htmlFor="senha">Nova Senha</FormLabel>
-          <TextField
-            error={passwordError}
-            id="senha"
-            name="senha"
-            placeholder="Digite sua nova senha"
-            type={showPassword ? 'text' : 'password'}
-            variant="outlined"
-            color={passwordError ? 'error' : 'primary'}
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <IconButton
-                  aria-label="toggle password visibility"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              ),
-            }}
-          />
-          {passwordError && <p style={{ color: 'red' }}>{passwordErrorMessage}</p>}
-        </FormControl>
       </DialogContent>
       <DialogActions sx={{ pb: 3, px: 3 }}>
         <Button onClick={handleClose}>Cancelar</Button>
@@ -166,5 +124,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
         </Button>
       </DialogActions>
     </Dialog>
+    <RedefineSenha open={openRedefinir} handleClose={() => setOpenRedefinir(false)} codigo={codigo} tipoUsuario={userType} email={email} />
+    </>
   )
 }
