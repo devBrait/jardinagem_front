@@ -7,7 +7,7 @@ export default function BotoesProcesso() {
                 Solicitar e vender suas plantas é muito fácil.
             </Typography>
             <Typography variant="h5" className="mb-12 text-verde_claro font-bold text-left sm:hidden">
-                    Para Paisagistas:
+                    Para Fornecedores:
             </Typography>
             <Stack 
                 direction={{ xs: "column", md: "row" }}
@@ -84,7 +84,7 @@ export default function BotoesProcesso() {
                     marginX: 5,
                 }}/>
                  <Typography variant="h5" className="mb-12 text-verde_claro font-bold text-left sm:hidden">
-                    Para Fornecedores:
+                    Para Paisagistas:
                 </Typography>
                 {/* Direita */}
                 <Box className="flex flex-col items-center">
